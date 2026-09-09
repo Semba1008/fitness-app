@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#3b7cff" />
+<title>マイトレーニング</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header class="app-header">
+  <h1 id="page-title">ホーム</h1>
+</header>
+
+<main id="views">
+
+  <section id="view-home" class="view">
+    <div class="card" id="home-calorie-card">
+      <h2>今日の目標カロリー</h2>
+      <p class="empty-hint">プロフィールが未設定です。「カロリー」タブで設定してください。</p>
+    </div>
+    <div class="card">
+      <h2>体重</h2>
+      <div class="row-between">
+        <span id="home-latest-weight">記録なし</span>
+        <button class="btn-secondary" data-goto="view-weight">記録する</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>今日の筋トレ</h2>
+      <button class="btn-primary" data-goto="view-workout">トレーニングを記録する</button>
+    </div>
+  </section>
+
+  <section id="view-workout" class="view">
+    <div class="card">
+      <label>種目を選択</label>
+      <select id="exercise-select"></select>
+      <button class="btn-secondary" id="btn-add-exercise">+ カスタム種目を追加</button>
+    </div>
+
+    <div class="card" id="suggestion-card" hidden>
+      <h2>AIの提案</h2>
+      <p id="suggestion-text"></p>
+      <div class="suggestion-values">
+        <div><span class="label">重量</span><span id="suggestion-weight">-</span></div>
+        <div><span class="label">目標回数</span><span id="suggestion-reps">-</span></div>
+        <div><span class="label">セット数</span><span id="suggestion-sets">-</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>今回の記録</h2>
+      <div id="set-rows"></div>
+      <button class="btn-secondary" id="btn-add-set">+ セットを追加</button>
+      <button class="btn-primary" id="btn-save-session">この内容を保存</button>
+    </div>
+
+    <div class="card">
+      <h2>直近の履歴</h2>
+      <div id="exercise-history"></div>
+    </div>
+  </section>
+
+  <section id="view-weight" class="view">
+    <div class="card">
+      <h2>体重を記録</h2>
+      <div class="form-row">
+        <input type="date" id="weight-date" />
+        <input type="number" id="weight-value" step="0.1" placeholder="kg" />
+      </div>
+      <button class="btn-primary" id="btn-save-weight">保存</button>
+    </div>
+    <div class="card">
+      <h2>体重推移</h2>
+      <canvas id="weight-chart" class="chart"></canvas>
+    </div>
+  </section>
+
+  <section id="view-calorie" class="view">
+    <div class="card">
+      <h2>プロフィール</h2>
+      <div class="form-grid">
+        <label>性別
+          <select id="p-gender">
+            <option value="male">男性</option>
+            <option value="female">女性</option>
+          </select>
+        </label>
+        <label>年齢
+          <input type="number" id="p-age" />
+        </label>
+        <label>身長(cm)
+          <input type="number" id="p-height" />
+        </label>
+        <label>体重(kg)
+          <input type="number" id="p-weight" step="0.1" />
+        </label>
+        <label>活動レベル
+          <select id="p-activity"></select>
+        </label>
+        <label>目標
+          <select id="p-goal"></select>
+        </label>
+      </div>
+      <button class="btn-primary" id="btn-save-profile">保存して計算</button>
+    </div>
+
+    <div class="card" id="calorie-result" hidden>
+      <h2>計算結果</h2>
+      <div class="result-grid">
+        <div><span class="label">BMI</span><span id="r-bmi">-</span></div>
+        <div><span class="label">基礎代謝(BMR)</span><span id="r-bmr">- kcal</span></div>
+        <div><span class="label">消費カロリー(TDEE)</span><span id="r-tdee">- kcal</span></div>
+        <div class="highlight"><span class="label">目標摂取カロリー</span><span id="r-target">- kcal</span></div>
+      </div>
+      <h3>PFCバランス(目安)</h3>
+      <div class="result-grid">
+        <div><span class="label">タンパク質</span><span id="r-protein">- g</span></div>
+        <div><span class="label">脂質</span><span id="r-fat">- g</span></div>
+        <div><span class="label">炭水化物</span><span id="r-carb">- g</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-settings" class="view">
+    <div class="card">
+      <h2>データのバックアップ</h2>
+      <button class="btn-secondary" id="btn-export">JSONでエクスポート</button>
+      <label class="btn-secondary file-label">
+        JSONからインポート
+        <input type="file" id="import-file" accept="application/json" hidden />
+      </label>
+    </div>
+    <div class="card">
+      <h2>危険な操作</h2>
+      <button class="btn-danger" id="btn-reset">全データを削除</button>
+    </div>
+    <div class="card">
+      <h2>このアプリについて</h2>
+      <p class="muted">すべてのデータはこの端末内(ブラウザのlocalStorage)にのみ保存され、外部には送信されません。</p>
+    </div>
+  </section>
+
+</main>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-view="view-home" data-title="ホーム">ホーム</button>
+  <button class="nav-btn" data-view="view-workout" data-title="筋トレ">筋トレ</button>
+  <button class="nav-btn" data-view="view-weight" data-title="体重">体重</button>
+  <button class="nav-btn" data-view="view-calorie" data-title="カロリー">カロリー</button>
+  <button class="nav-btn" data-view="view-settings" data-title="設定">設定</button>
+</nav>
+
+<script src="js/storage.js"></script>
+<script src="js/calorie.js"></script>
+<script src="js/workout.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

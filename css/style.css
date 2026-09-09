@@ -1,0 +1,242 @@
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --text: #1a1c1e;
+  --muted: #6b7280;
+  --primary: #3b7cff;
+  --primary-text: #ffffff;
+  --border: #e5e7eb;
+  --danger: #e0453f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16181c;
+    --surface: #23262b;
+    --text: #f0f1f3;
+    --muted: #9aa0a6;
+    --primary: #4d8bff;
+    --primary-text: #0b0d10;
+    --border: #33373d;
+    --danger: #ff6b64;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+  padding-bottom: 72px;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  z-index: 5;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 18px;
+}
+
+main {
+  padding: 12px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.view { display: none; }
+.view.active { display: block; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.card h2 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.card h3 {
+  margin: 12px 0 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  margin-top: 4px;
+}
+
+.form-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 15px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-text);
+  font-weight: 600;
+}
+
+.btn-secondary {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.file-label {
+  display: block;
+  text-align: center;
+}
+
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.row-between button { width: auto; margin-top: 0; }
+
+.empty-hint, .muted {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+.suggestion-values, .result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.result-grid { grid-template-columns: 1fr 1fr; }
+
+.suggestion-values > div, .result-grid > div {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+}
+
+.result-grid .highlight {
+  grid-column: 1 / -1;
+  background: var(--primary);
+  color: var(--primary-text);
+}
+
+.result-grid .highlight .label { color: var(--primary-text); opacity: 0.85; }
+
+.label {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.set-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.set-row span {
+  width: 20px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.set-row input { margin-top: 0; }
+
+.chart {
+  width: 100%;
+  height: 220px;
+  display: block;
+}
+
+.history-entry {
+  border-bottom: 1px solid var(--border);
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.history-entry:last-child { border-bottom: none; }
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 10;
+}
+
+.nav-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: var(--muted);
+  font-size: 11px;
+  padding: 10px 4px 8px;
+  margin: 0;
+}
+
+.nav-btn.active {
+  color: var(--primary);
+  font-weight: 600;
+}
