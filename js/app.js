@@ -17,6 +17,7 @@ function todayDateStr() {
 }
 
 function jumpToExercise(exerciseId) {
+  switchView('view-workout', '筋トレ');
   document.getElementById('exercise-select').value = exerciseId;
   onExerciseChange(exerciseId);
   document.getElementById('exercise-log-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -50,35 +51,67 @@ function showToast(message) {
   }, 1400);
 }
 
+const VIEW_TITLES = {
+  'view-home': 'ホーム',
+  'view-workout': '筋トレ',
+  'view-weight': '体重',
+  'view-graph': 'グラフ',
+  'view-settings': '設定',
+};
+
+let lastRecordView = 'view-workout';
+
 function switchView(viewId, title) {
+  const resolvedTitle = title || VIEW_TITLES[viewId] || '';
   document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === viewId));
-  document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === viewId));
-  document.getElementById('page-title').textContent = title;
+  const isRecordView = viewId === 'view-workout' || viewId === 'view-weight';
+  if (isRecordView) lastRecordView = viewId;
+  document.querySelectorAll('.nav-btn').forEach((b) => {
+    const isActive = b.dataset.group === 'record' ? isRecordView : b.dataset.view === viewId;
+    b.classList.toggle('active', isActive);
+  });
+  document.querySelectorAll('.segmented button[data-view]').forEach((b) => {
+    b.classList.toggle('active', b.dataset.view === viewId);
+  });
+  document.getElementById('page-title').textContent = resolvedTitle;
   if (viewId === 'view-home') renderHome();
   if (viewId === 'view-workout') {
     renderWorkoutMenu();
     renderMyRoutines();
     renderExerciseHistory();
-    renderExerciseChart();
     renderWorkoutDayLog();
   }
   if (viewId === 'view-weight') {
-    renderWeightChart();
     renderWeightHistory();
+  }
+  if (viewId === 'view-graph') {
+    renderCalendar();
+    renderCalendarDayDetail();
+    renderExerciseChart();
+    renderWeightChart();
     populateCalorieOptions();
     renderWeightForecast();
+  }
+  if (viewId === 'view-settings') {
+    populateCalorieOptions();
   }
 }
 
 function setupNav() {
   document.querySelectorAll('.nav-btn').forEach((btn) => {
-    btn.addEventListener('click', () => switchView(btn.dataset.view, btn.dataset.title));
+    btn.addEventListener('click', () => {
+      if (btn.dataset.group === 'record') {
+        switchView(lastRecordView, VIEW_TITLES[lastRecordView]);
+      } else {
+        switchView(btn.dataset.view, btn.dataset.title);
+      }
+    });
+  });
+  document.querySelectorAll('.segmented button[data-view]').forEach((btn) => {
+    btn.addEventListener('click', () => switchView(btn.dataset.view, VIEW_TITLES[btn.dataset.view]));
   });
   document.querySelectorAll('[data-goto]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const target = document.querySelector(`.nav-btn[data-view="${btn.dataset.goto}"]`);
-      switchView(btn.dataset.goto, target ? target.dataset.title : '');
-    });
+    btn.addEventListener('click', () => switchView(btn.dataset.goto, VIEW_TITLES[btn.dataset.goto]));
   });
 }
 
@@ -88,16 +121,16 @@ function renderHome() {
   if (profile) {
     const summary = Calorie.summarize(getCalorieProfile());
     card.innerHTML = `
-      <h2>今日の目標カロリー</h2>
+      <h2><svg class="icon"><use href="#icon-flame"></use></svg>今日の目標カロリー</h2>
       <div class="row-between">
-        <span>${summary.target} kcal</span>
-        <button class="btn-secondary" data-goto="view-weight">詳細</button>
+        <span class="stat-value">${summary.target} kcal</span>
+        <button class="btn-secondary" data-goto="view-graph">詳細</button>
       </div>`;
-    card.querySelector('[data-goto]').addEventListener('click', () => switchView('view-weight', '体重'));
+    card.querySelector('[data-goto]').addEventListener('click', () => switchView('view-graph', 'グラフ'));
   } else {
     card.innerHTML = `
-      <h2>今日の目標カロリー</h2>
-      <p class="empty-hint">プロフィールが未設定です。「体重」タブで設定してください。</p>`;
+      <h2><svg class="icon"><use href="#icon-flame"></use></svg>今日の目標カロリー</h2>
+      <p class="empty-hint">プロフィールが未設定です。「設定」タブで設定してください。</p>`;
   }
 
   const log = Storage.getWeightLog();
@@ -106,8 +139,71 @@ function renderHome() {
     ? `${log[log.length - 1].weightKg} kg (${formatDateLabel(log[log.length - 1].date)})`
     : '記録なし';
 
-  renderCalendar();
-  renderCalendarDayDetail();
+  renderHomeMenu();
+  renderRecentPRs();
+}
+
+function renderHomeMenu() {
+  const container = document.getElementById('home-menu-list');
+  const dayKey = routineDayForWeekday(new Date().getDay());
+  if (!dayKey) {
+    container.innerHTML = '<p class="empty-hint">今日はルーティンの日ではありません。休養もトレーニングのうちです。</p>';
+    return;
+  }
+  const dayInfo = ROUTINE_DAYS[dayKey];
+  const exercises = Storage.getExercises().filter((ex) => ex.day === dayKey);
+  if (!exercises.length) {
+    container.innerHTML = '<p class="empty-hint">この曜日の種目がまだ登録されていません。</p>';
+    return;
+  }
+  const listHtml = exercises
+    .map(
+      (ex) => `
+      <button type="button" class="today-menu-item" data-exercise-id="${ex.id}">
+        <span>${ex.name}</span>
+        <span class="muted">${ex.targetSets || 3}セット×${repRangeText(ex)}</span>
+      </button>`
+    )
+    .join('');
+  container.innerHTML = `<p class="muted" style="margin-bottom:10px;">${dayInfo.label}</p>${listHtml}`;
+  container.querySelectorAll('[data-exercise-id]').forEach((btn) => {
+    btn.addEventListener('click', () => jumpToExercise(btn.dataset.exerciseId));
+  });
+}
+
+function renderRecentPRs() {
+  const container = document.getElementById('home-pr-list');
+  const exercises = Storage.getExercises();
+  const prs = [];
+  exercises.forEach((ex) => {
+    if (ex.type === 'cardio') return;
+    const history = historyForCurrentType(ex);
+    if (history.length < 2) return;
+    const last = history[history.length - 1];
+    const priorBest = Math.max(...history.slice(0, -1).map(sessionMaxWeight));
+    const lastMax = sessionMaxWeight(last);
+    if (lastMax > priorBest) {
+      prs.push({ exercise: ex, session: last, weight: lastMax });
+    }
+  });
+  prs.sort((a, b) => (a.session.date < b.session.date ? 1 : -1));
+  const top = prs.slice(0, 3);
+  if (!top.length) {
+    container.innerHTML = '<p class="empty-hint">まだ自己ベストの更新はありません。記録を続けましょう。</p>';
+    return;
+  }
+  container.innerHTML = top
+    .map(
+      (p) => `
+      <div class="pr-badge">
+        <svg class="icon"><use href="#icon-award"></use></svg>
+        <div class="pr-body">
+          <div class="pr-title">${p.exercise.name} ${p.weight}kg</div>
+          <div class="pr-sub">${formatDateLabel(p.session.date)} に自己ベスト更新</div>
+        </div>
+      </div>`
+    )
+    .join('');
 }
 
 const WEEKDAY_LABELS_SHORT = ['日', '月', '火', '水', '木', '金', '土'];
@@ -525,10 +621,13 @@ function onExerciseChange(exerciseId) {
 function renderExerciseChart() {
   const canvas = document.getElementById('exercise-chart');
   const titleEl = document.getElementById('exercise-chart-title');
+  const labelEl = document.getElementById('graph-exercise-label');
   if (!currentExercise) {
+    labelEl.textContent = '「記録」タブで種目を選ぶと表示されます。';
     drawLineChart(canvas, []);
     return;
   }
+  labelEl.textContent = `${currentExercise.name}`;
   const history = historyForCurrentType(currentExercise);
   if (currentExercise.type === 'cardio') {
     titleEl.textContent = '消費カロリー推移';
@@ -1338,11 +1437,6 @@ function init() {
   renderWorkoutDayLog();
   initCalendarState();
   renderHome();
-
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    renderWeightChart();
-    renderExerciseChart();
-  });
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());

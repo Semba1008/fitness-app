@@ -3,57 +3,81 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#3b7cff" media="(prefers-color-scheme: light)" />
-<meta name="theme-color" content="#23262b" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#0b0b10" />
 <title>マイトレーニング</title>
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
 <link rel="icon" href="icons/icon-192.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="icon-home" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5" /><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" /></symbol>
+    <symbol id="icon-dumbbell" viewBox="0 0 24 24"><rect x="1" y="9" width="4" height="6" rx="1.3" /><rect x="19" y="9" width="4" height="6" rx="1.3" /><rect x="6" y="10.3" width="3" height="3.4" rx="0.6" /><rect x="15" y="10.3" width="3" height="3.4" rx="0.6" /><line x1="9" y1="12" x2="15" y2="12" /></symbol>
+    <symbol id="icon-chart" viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7" /><polyline points="14 7 21 7 21 14" /></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15 1.65 1.65 0 0 0 3.09 14H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></symbol>
+    <symbol id="icon-scale" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" /><path d="M12 8v4l3 2" /></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></symbol>
+    <symbol id="icon-pencil" viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24"><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></symbol>
+    <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="3" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></symbol>
+    <symbol id="icon-flame" viewBox="0 0 24 24"><path d="M12 22c4 0 7-3 7-7 0-3-2-5-3-7 0 2-1 3-2 3 0-3-2-5-2-8-3 3-5 6-5 10a5 5 0 0 0 5 9z" /></symbol>
+    <symbol id="icon-award" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6" /><path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5" /></symbol>
+    <symbol id="icon-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></symbol>
+    <symbol id="icon-list" viewBox="0 0 24 24"><line x1="9" y1="6" x2="21" y2="6" /><line x1="9" y1="12" x2="21" y2="12" /><line x1="9" y1="18" x2="21" y2="18" /><line x1="4" y1="6" x2="4.01" y2="6" /><line x1="4" y1="12" x2="4.01" y2="12" /><line x1="4" y1="18" x2="4.01" y2="18" /></symbol>
+    <symbol id="icon-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></symbol>
+    <symbol id="icon-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" /></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v13" /><polyline points="7 11 12 16 17 11" /><line x1="4" y1="20" x2="20" y2="20" /></symbol>
+    <symbol id="icon-alert" viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3Z" /><line x1="12" y1="10" x2="12" y2="14" /><line x1="12" y1="17" x2="12.01" y2="17" /></symbol>
+  </defs>
+</svg>
+
 <header class="app-header">
+  <svg class="icon" style="font-size:20px;color:var(--primary);"><use href="#icon-dumbbell"></use></svg>
   <h1 id="page-title">ホーム</h1>
 </header>
 
 <main id="views">
 
   <section id="view-home" class="view active">
-    <div class="card" id="calendar-card">
-      <h2>記録カレンダー</h2>
-      <div class="calendar-nav">
-        <button type="button" class="btn-secondary btn-sm" id="btn-cal-prev">‹ 前の月</button>
-        <span id="calendar-month-label"></span>
-        <button type="button" class="btn-secondary btn-sm" id="btn-cal-next">次の月 ›</button>
-      </div>
-      <div class="calendar-weekdays">
-        <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
-      </div>
-      <div id="calendar-grid" class="calendar-grid"></div>
-      <h3 id="calendar-day-title">今日の記録</h3>
-      <div id="calendar-day-detail"></div>
-    </div>
-    <div class="card" id="home-calorie-card">
-      <h2>今日の目標カロリー</h2>
-      <p class="empty-hint">プロフィールが未設定です。「体重」タブで設定してください。</p>
-    </div>
-    <div class="card">
-      <h2>体重</h2>
+    <div class="card" id="home-weight-card">
+      <h2><svg class="icon"><use href="#icon-scale"></use></svg>今日の体重</h2>
       <div class="row-between">
-        <span id="home-latest-weight">記録なし</span>
+        <span class="stat-value" id="home-latest-weight">記録なし</span>
         <button class="btn-secondary" data-goto="view-weight">記録する</button>
       </div>
     </div>
-    <div class="card">
-      <h2>今日の筋トレ</h2>
-      <button class="btn-primary" data-goto="view-workout">トレーニングを記録する</button>
+
+    <div class="card" id="home-calorie-card">
+      <h2><svg class="icon"><use href="#icon-flame"></use></svg>今日の目標カロリー</h2>
+      <p class="empty-hint">プロフィールが未設定です。「設定」タブで設定してください。</p>
+    </div>
+
+    <div class="card" id="home-menu-card">
+      <h2><svg class="icon"><use href="#icon-dumbbell"></use></svg>本日のメニュー</h2>
+      <div id="home-menu-list"></div>
+    </div>
+
+    <div class="card" id="home-pr-card">
+      <h2><svg class="icon"><use href="#icon-award"></use></svg>直近のベスト更新</h2>
+      <div id="home-pr-list"></div>
     </div>
   </section>
 
   <section id="view-workout" class="view">
+    <div class="segmented">
+      <button type="button" class="active" data-view="view-workout">筋トレ</button>
+      <button type="button" data-view="view-weight">体重</button>
+    </div>
+
     <div class="card" id="workout-menu-card">
-      <h2 id="workout-menu-title">いつものメニュー</h2>
+      <h2><svg class="icon"><use href="#icon-list"></use></svg><span id="workout-menu-title">いつものメニュー</span></h2>
       <div class="form-row">
         <select id="workout-menu-day-select">
           <option value="">曜日で選ぶ</option>
@@ -71,9 +95,9 @@
     </div>
 
     <div class="card" id="my-routines-card">
-      <h2>自分のメニュー</h2>
+      <h2><svg class="icon"><use href="#icon-target"></use></svg>自分のメニュー</h2>
       <div id="my-routines-list"></div>
-      <button type="button" class="btn-secondary" id="btn-add-routine">+ 新しいメニューを追加</button>
+      <button type="button" class="btn-secondary" id="btn-add-routine"><svg class="icon"><use href="#icon-plus"></use></svg>新しいメニューを追加</button>
     </div>
 
     <div class="card" id="routine-form-card" hidden>
@@ -85,14 +109,14 @@
       <p class="empty-hint">有酸素運動は時間・速度の入力が必要なため、メニューには含められません。別途「種目を選択」から記録してください。</p>
       <div id="routine-exercise-checklist" class="routine-checklist"></div>
       <div class="button-row">
-        <button class="btn-primary" id="btn-save-routine">保存</button>
+        <button class="btn-primary" id="btn-save-routine"><svg class="icon"><use href="#icon-check"></use></svg>保存</button>
         <button class="btn-secondary" id="btn-cancel-routine">キャンセル</button>
       </div>
-      <button class="btn-danger" id="btn-delete-routine" hidden>このメニューを削除</button>
+      <button class="btn-danger" id="btn-delete-routine" hidden><svg class="icon"><use href="#icon-trash"></use></svg>このメニューを削除</button>
     </div>
 
     <div class="card">
-      <h2>日付で見る</h2>
+      <h2><svg class="icon"><use href="#icon-calendar"></use></svg>日付で見る</h2>
       <div class="form-row">
         <input type="date" id="workout-log-date" />
       </div>
@@ -104,13 +128,13 @@
         <label>種目を選択(自由に選ぶ)</label>
         <select id="exercise-select"></select>
         <div class="button-row">
-          <button class="btn-secondary" id="btn-add-exercise">+ 種目を追加</button>
-          <button class="btn-secondary" id="btn-edit-exercise">この種目を編集</button>
+          <button class="btn-secondary" id="btn-add-exercise"><svg class="icon"><use href="#icon-plus"></use></svg>種目を追加</button>
+          <button class="btn-secondary" id="btn-edit-exercise"><svg class="icon"><use href="#icon-pencil"></use></svg>この種目を編集</button>
         </div>
       </div>
 
       <div class="log-section" id="suggestion-card" hidden>
-        <h2>次回の目安</h2>
+        <h2><svg class="icon"><use href="#icon-target"></use></svg>次回の目安</h2>
         <p id="suggestion-text"></p>
         <div class="suggestion-values">
           <div><span class="label">重量</span><span id="suggestion-weight">-</span></div>
@@ -119,43 +143,38 @@
         </div>
       </div>
 
-      <div class="log-section">
-        <h2 id="exercise-chart-title">重量推移</h2>
-        <canvas id="exercise-chart" class="chart"></canvas>
-      </div>
-
       <div class="log-section" id="strength-log-card">
-        <h2>今回の記録</h2>
+        <h2><svg class="icon"><use href="#icon-pencil"></use></svg>今回の記録</h2>
         <p class="empty-hint" id="edit-session-hint" hidden></p>
         <div id="set-rows"></div>
-        <button class="btn-secondary" id="btn-add-set">+ セットを追加</button>
-        <button class="btn-primary" id="btn-save-session">この内容を保存</button>
+        <button class="btn-secondary" id="btn-add-set"><svg class="icon"><use href="#icon-plus"></use></svg>セットを追加</button>
+        <button class="btn-primary" id="btn-save-session"><svg class="icon"><use href="#icon-check"></use></svg>この内容を保存</button>
         <button class="btn-secondary" id="btn-cancel-edit-session" hidden>編集をキャンセル</button>
       </div>
 
       <div class="log-section" id="cardio-card" hidden>
-        <h2>有酸素運動の記録</h2>
+        <h2><svg class="icon"><use href="#icon-flame"></use></svg>有酸素運動の記録</h2>
         <p class="empty-hint" id="cardio-edit-hint" hidden></p>
         <div class="form-grid">
           <label>時間(分)
-            <input type="number" id="cardio-duration" min="1" />
+            <input type="number" id="cardio-duration" min="1" inputmode="decimal" />
           </label>
           <label>速度(km/h)
-            <input type="number" id="cardio-speed" step="0.1" min="0" />
+            <input type="number" id="cardio-speed" step="0.1" min="0" inputmode="decimal" />
           </label>
           <label>傾斜(%)
-            <input type="number" id="cardio-incline" step="0.5" min="0" value="0" />
+            <input type="number" id="cardio-incline" step="0.5" min="0" value="0" inputmode="decimal" />
           </label>
         </div>
         <div class="result-grid">
           <div class="highlight"><span class="label">推定消費カロリー</span><span id="cardio-calories">- kcal</span></div>
         </div>
-        <button class="btn-primary" id="btn-save-cardio">この内容を保存</button>
+        <button class="btn-primary" id="btn-save-cardio"><svg class="icon"><use href="#icon-check"></use></svg>この内容を保存</button>
         <button class="btn-secondary" id="btn-cancel-edit-cardio" hidden>編集をキャンセル</button>
       </div>
 
       <div class="log-section">
-        <h2>直近の履歴</h2>
+        <h2><svg class="icon"><use href="#icon-list"></use></svg>直近の履歴</h2>
         <div id="exercise-history"></div>
       </div>
     </div>
@@ -199,57 +218,67 @@
         </label>
       </div>
       <div class="button-row">
-        <button class="btn-primary" id="btn-save-exercise">保存</button>
+        <button class="btn-primary" id="btn-save-exercise"><svg class="icon"><use href="#icon-check"></use></svg>保存</button>
         <button class="btn-secondary" id="btn-cancel-exercise">キャンセル</button>
       </div>
-      <button class="btn-danger" id="btn-delete-exercise" hidden>この種目を削除</button>
+      <button class="btn-danger" id="btn-delete-exercise" hidden><svg class="icon"><use href="#icon-trash"></use></svg>この種目を削除</button>
     </div>
   </section>
 
   <section id="view-weight" class="view">
-    <div class="card">
-      <h2>体重を記録</h2>
-      <p class="empty-hint" id="weight-edit-hint" hidden></p>
-      <div class="form-row">
-        <input type="date" id="weight-date" />
-        <input type="number" id="weight-value" step="0.1" placeholder="kg" />
-      </div>
-      <button class="btn-primary" id="btn-save-weight">保存</button>
-      <button class="btn-secondary" id="btn-cancel-edit-weight" hidden>編集をキャンセル</button>
-    </div>
-    <div class="card">
-      <h2>体重推移</h2>
-      <canvas id="weight-chart" class="chart"></canvas>
-    </div>
-    <div class="card">
-      <h2>プロフィール</h2>
-      <div class="form-grid">
-        <label>性別
-          <select id="p-gender">
-            <option value="male">男性</option>
-            <option value="female">女性</option>
-          </select>
-        </label>
-        <label>年齢
-          <input type="number" id="p-age" />
-        </label>
-        <label>身長(cm)
-          <input type="number" id="p-height" />
-        </label>
-        <label>活動レベル
-          <select id="p-activity"></select>
-        </label>
-        <label>目標
-          <select id="p-goal"></select>
-        </label>
-      </div>
-      <button class="btn-primary" id="btn-save-profile">保存</button>
+    <div class="segmented">
+      <button type="button" data-view="view-workout">筋トレ</button>
+      <button type="button" class="active" data-view="view-weight">体重</button>
     </div>
 
     <div class="card">
-      <h2>カロリー計算</h2>
+      <h2><svg class="icon"><use href="#icon-scale"></use></svg>体重を記録</h2>
+      <p class="empty-hint" id="weight-edit-hint" hidden></p>
+      <div class="form-row">
+        <input type="date" id="weight-date" />
+        <input type="number" id="weight-value" step="0.1" placeholder="kg" inputmode="decimal" />
+      </div>
+      <button class="btn-primary" id="btn-save-weight"><svg class="icon"><use href="#icon-check"></use></svg>保存</button>
+      <button class="btn-secondary" id="btn-cancel-edit-weight" hidden>編集をキャンセル</button>
+    </div>
+
+    <div class="card">
+      <h2><svg class="icon"><use href="#icon-list"></use></svg>体重の記録一覧</h2>
+      <div id="weight-history"></div>
+    </div>
+  </section>
+
+  <section id="view-graph" class="view">
+    <div class="card" id="calendar-card">
+      <h2><svg class="icon"><use href="#icon-calendar"></use></svg>記録カレンダー</h2>
+      <div class="calendar-nav">
+        <button type="button" class="btn-secondary btn-sm" id="btn-cal-prev">‹ 前の月</button>
+        <span id="calendar-month-label"></span>
+        <button type="button" class="btn-secondary btn-sm" id="btn-cal-next">次の月 ›</button>
+      </div>
+      <div class="calendar-weekdays">
+        <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
+      </div>
+      <div id="calendar-grid" class="calendar-grid"></div>
+      <h3 id="calendar-day-title">今日の記録</h3>
+      <div id="calendar-day-detail"></div>
+    </div>
+
+    <div class="card">
+      <h2><svg class="icon"><use href="#icon-chart"></use></svg><span id="exercise-chart-title">重量推移</span></h2>
+      <p class="empty-hint" id="graph-exercise-label"></p>
+      <canvas id="exercise-chart" class="chart"></canvas>
+    </div>
+
+    <div class="card">
+      <h2><svg class="icon"><use href="#icon-scale"></use></svg>体重推移</h2>
+      <canvas id="weight-chart" class="chart"></canvas>
+    </div>
+
+    <div class="card">
+      <h2><svg class="icon"><use href="#icon-flame"></use></svg>カロリー計算</h2>
       <p class="empty-hint" id="calorie-empty-hint">プロフィールを設定し、体重を記録すると自動で計算されます。</p>
-      <p class="empty-hint" id="calorie-fallback-hint" hidden>体重がまだ記録されていないため、仮の体重(60kg)で計算しています。「体重を記録」から実際の体重を登録してください。</p>
+      <p class="empty-hint" id="calorie-fallback-hint" hidden>体重がまだ記録されていないため、仮の体重(60kg)で計算しています。「体重」タブから実際の体重を登録してください。</p>
       <div id="calorie-result" hidden>
         <div class="result-grid">
           <div><span class="label">BMI</span><span id="r-bmi">-</span></div>
@@ -267,7 +296,7 @@
     </div>
 
     <div class="card">
-      <h2>体重の予測とカロリーコントロール</h2>
+      <h2><svg class="icon"><use href="#icon-target"></use></svg>体重の予測とカロリーコントロール</h2>
       <p class="empty-hint" id="forecast-empty-hint">体重を3回以上記録すると、今後の体重変化をAIが予測します。</p>
       <div id="forecast-result" hidden>
         <div class="result-grid">
@@ -278,16 +307,36 @@
         <p class="empty-hint" id="calorie-control-note"></p>
       </div>
     </div>
-
-    <div class="card">
-      <h2>体重の記録一覧</h2>
-      <div id="weight-history"></div>
-    </div>
   </section>
 
   <section id="view-settings" class="view">
     <div class="card">
-      <h2>データのバックアップ</h2>
+      <h2><svg class="icon"><use href="#icon-user"></use></svg>プロフィール</h2>
+      <div class="form-grid">
+        <label>性別
+          <select id="p-gender">
+            <option value="male">男性</option>
+            <option value="female">女性</option>
+          </select>
+        </label>
+        <label>年齢
+          <input type="number" id="p-age" inputmode="numeric" />
+        </label>
+        <label>身長(cm)
+          <input type="number" id="p-height" inputmode="decimal" />
+        </label>
+        <label>活動レベル
+          <select id="p-activity"></select>
+        </label>
+        <label>目標
+          <select id="p-goal"></select>
+        </label>
+      </div>
+      <button class="btn-primary" id="btn-save-profile"><svg class="icon"><use href="#icon-check"></use></svg>保存</button>
+    </div>
+
+    <div class="card">
+      <h2><svg class="icon"><use href="#icon-download"></use></svg>データのバックアップ</h2>
       <button class="btn-secondary" id="btn-export">JSONでエクスポート</button>
       <label class="btn-secondary file-label">
         JSONからインポート
@@ -295,8 +344,8 @@
       </label>
     </div>
     <div class="card">
-      <h2>危険な操作</h2>
-      <button class="btn-danger" id="btn-reset">全データを削除</button>
+      <h2><svg class="icon"><use href="#icon-alert"></use></svg>危険な操作</h2>
+      <button class="btn-danger" id="btn-reset"><svg class="icon"><use href="#icon-trash"></use></svg>全データを削除</button>
     </div>
     <div class="card">
       <h2>このアプリについて</h2>
@@ -309,10 +358,10 @@
 <div id="toast" class="toast" hidden></div>
 
 <nav class="bottom-nav">
-  <button class="nav-btn active" data-view="view-home" data-title="ホーム">ホーム</button>
-  <button class="nav-btn" data-view="view-workout" data-title="筋トレ">筋トレ</button>
-  <button class="nav-btn" data-view="view-weight" data-title="体重">体重</button>
-  <button class="nav-btn" data-view="view-settings" data-title="設定">設定</button>
+  <button class="nav-btn active" data-view="view-home" data-title="ホーム"><svg class="icon"><use href="#icon-home"></use></svg>ホーム</button>
+  <button class="nav-btn" data-group="record" data-title="記録"><svg class="icon"><use href="#icon-dumbbell"></use></svg>記録</button>
+  <button class="nav-btn" data-view="view-graph" data-title="グラフ"><svg class="icon"><use href="#icon-chart"></use></svg>グラフ</button>
+  <button class="nav-btn" data-view="view-settings" data-title="設定"><svg class="icon"><use href="#icon-settings"></use></svg>設定</button>
 </nav>
 
 <script src="js/storage.js"></script>
