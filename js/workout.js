@@ -13,6 +13,7 @@ const Workout = {
     }
 
     const sets = last.sets;
+    const lastWeight = Math.max(...sets.map((s) => s.weight));
     const minRepsAchieved = Math.min(...sets.map((s) => s.reps));
     const allHitMax = sets.every((s) => s.reps >= exercise.repMax);
     const allHitMin = sets.every((s) => s.reps >= exercise.repMin);
@@ -27,7 +28,7 @@ const Workout = {
         note += '(前回は高強度だったため増加幅を控えめにしています)';
       }
       return {
-        weight: exercise.type === 'bodyweight' ? last.weight : last.weight + appliedIncrement,
+        weight: exercise.type === 'bodyweight' ? lastWeight : lastWeight + appliedIncrement,
         targetReps: exercise.repMin,
         sets: sets.length,
         note,
@@ -37,7 +38,7 @@ const Workout = {
     if (allHitMin) {
       const nextTarget = Math.min(minRepsAchieved + 1, exercise.repMax);
       return {
-        weight: last.weight,
+        weight: lastWeight,
         targetReps: nextTarget,
         sets: sets.length,
         note: `同じ重量でレップ数を+1し、${nextTarget}回を目指しましょう。`,
@@ -45,7 +46,7 @@ const Workout = {
     }
 
     return {
-      weight: last.weight,
+      weight: lastWeight,
       targetReps: exercise.repMin,
       sets: sets.length,
       note: `前回未達のセットがありました。同じ重量・${exercise.repMin}回で再チャレンジしましょう。`,

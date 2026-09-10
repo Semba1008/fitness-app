@@ -40,7 +40,41 @@
     <div class="card">
       <label>種目を選択</label>
       <select id="exercise-select"></select>
-      <button class="btn-secondary" id="btn-add-exercise">+ カスタム種目を追加</button>
+      <div class="button-row">
+        <button class="btn-secondary" id="btn-add-exercise">+ 種目を追加</button>
+        <button class="btn-secondary" id="btn-edit-exercise">この種目を編集</button>
+      </div>
+    </div>
+
+    <div class="card" id="exercise-form-card" hidden>
+      <h2 id="exercise-form-title">種目を追加</h2>
+      <div class="form-grid">
+        <label>種目名
+          <input type="text" id="ex-name" placeholder="例: インクラインプレス" />
+        </label>
+        <label>部位
+          <input type="text" id="ex-category" placeholder="例: 胸" />
+        </label>
+        <label>種類
+          <select id="ex-type">
+            <option value="barbell">バーベル</option>
+            <option value="dumbbell">ダンベル</option>
+            <option value="machine">マシン</option>
+            <option value="bodyweight">自重</option>
+          </select>
+        </label>
+        <label>目標レップ(下限)
+          <input type="number" id="ex-rep-min" value="8" />
+        </label>
+        <label>目標レップ(上限)
+          <input type="number" id="ex-rep-max" value="12" />
+        </label>
+      </div>
+      <div class="button-row">
+        <button class="btn-primary" id="btn-save-exercise">保存</button>
+        <button class="btn-secondary" id="btn-cancel-exercise">キャンセル</button>
+      </div>
+      <button class="btn-danger" id="btn-delete-exercise" hidden>この種目を削除</button>
     </div>
 
     <div class="card" id="suggestion-card" hidden>
@@ -54,10 +88,17 @@
     </div>
 
     <div class="card">
+      <h2>重量推移</h2>
+      <canvas id="exercise-chart" class="chart"></canvas>
+    </div>
+
+    <div class="card">
       <h2>今回の記録</h2>
+      <p class="empty-hint" id="edit-session-hint" hidden></p>
       <div id="set-rows"></div>
       <button class="btn-secondary" id="btn-add-set">+ セットを追加</button>
       <button class="btn-primary" id="btn-save-session">この内容を保存</button>
+      <button class="btn-secondary" id="btn-cancel-edit-session" hidden>編集をキャンセル</button>
     </div>
 
     <div class="card">
@@ -78,6 +119,10 @@
     <div class="card">
       <h2>体重推移</h2>
       <canvas id="weight-chart" class="chart"></canvas>
+    </div>
+    <div class="card">
+      <h2>体重の記録一覧</h2>
+      <div id="weight-history"></div>
     </div>
   </section>
 

@@ -147,6 +147,26 @@ button {
 
 .row-between button { width: auto; margin-top: 0; }
 
+.button-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.button-row button { margin-top: 0; flex: 1; }
+
+.history-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-sm {
+  width: auto;
+  margin-top: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
 .empty-hint, .muted {
   color: var(--muted);
   font-size: 13px;
@@ -210,6 +230,8 @@ button {
   padding: 8px 0;
   font-size: 14px;
 }
+
+.history-entry .row-between { margin-bottom: 4px; }
 
 .history-entry:last-child { border-bottom: none; }
 

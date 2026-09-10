@@ -48,6 +48,10 @@ const Storage = {
     log.sort((a, b) => a.date.localeCompare(b.date));
     this._write(STORAGE_KEYS.weightLog, log);
   },
+  deleteWeightEntry(date) {
+    const log = this.getWeightLog().filter((e) => e.date !== date);
+    this._write(STORAGE_KEYS.weightLog, log);
+  },
 
   getExercises() {
     return this._read(STORAGE_KEYS.exercises, DEFAULT_EXERCISES);
@@ -60,6 +64,14 @@ const Storage = {
     list.push(exercise);
     this.saveExercises(list);
   },
+  updateExercise(id, fields) {
+    const list = this.getExercises().map((ex) => (ex.id === id ? { ...ex, ...fields } : ex));
+    this.saveExercises(list);
+  },
+  deleteExercise(id) {
+    const list = this.getExercises().filter((ex) => ex.id !== id);
+    this.saveExercises(list);
+  },
 
   getWorkoutLog() {
     return this._read(STORAGE_KEYS.workoutLog, []);
@@ -67,6 +79,14 @@ const Storage = {
   addWorkoutSession(session) {
     const log = this.getWorkoutLog();
     log.push(session);
+    this._write(STORAGE_KEYS.workoutLog, log);
+  },
+  updateWorkoutSession(id, fields) {
+    const log = this.getWorkoutLog().map((s) => (s.id === id ? { ...s, ...fields } : s));
+    this._write(STORAGE_KEYS.workoutLog, log);
+  },
+  deleteWorkoutSession(id) {
+    const log = this.getWorkoutLog().filter((s) => s.id !== id);
     this._write(STORAGE_KEYS.workoutLog, log);
   },
   lastSessionFor(exerciseId) {
