@@ -61,30 +61,21 @@ function repRangeText(exercise) {
     : `${exercise.repMin}〜${exercise.repMax}回`;
 }
 
-function renderTodayMenu() {
-  const card = document.getElementById('today-menu-card');
-  const dayKey = routineDayForWeekday(new Date().getDay());
-  const dayInfo = dayKey ? ROUTINE_DAYS[dayKey] : null;
+function populateMenuCategorySelect() {
+  const select = document.getElementById('menu-category-select');
+  const previous = select.value;
+  const categories = [...new Set(Storage.getExercises().map((ex) => ex.category))];
+  select.innerHTML =
+    '<option value="">部位で選ぶ</option>' + categories.map((c) => `<option value="${c}">${c}</option>`).join('');
+  select.value = categories.includes(previous) ? previous : '';
+}
 
-  if (!dayInfo) {
-    card.innerHTML = `
-      <h2>今日のメニュー</h2>
-      <p class="empty-hint">今日はルーティンの日ではありません。休養もトレーニングのうちです。</p>`;
-    return;
-  }
-
-  const exercises = Storage.getExercises().filter((ex) => ex.day === dayKey);
+function renderMenuItems(exercises, emptyMessage) {
+  const list = document.getElementById('today-menu-list');
   if (!exercises.length) {
-    card.innerHTML = `
-      <h2>今日のメニュー(${dayInfo.label})</h2>
-      <p class="empty-hint">この曜日の種目がまだ登録されていません。</p>`;
+    list.innerHTML = `<p class="empty-hint">${emptyMessage}</p>`;
     return;
   }
-
-  card.innerHTML = `
-    <h2>今日のメニュー(${dayInfo.label})</h2>
-    <div id="today-menu-list"></div>`;
-  const list = card.querySelector('#today-menu-list');
   list.innerHTML = exercises
     .map(
       (ex) => `
@@ -101,6 +92,31 @@ function renderTodayMenu() {
       onExerciseChange(btn.dataset.exerciseId);
     });
   });
+}
+
+function renderTodayMenu() {
+  const title = document.getElementById('today-menu-title');
+  const categoryValue = document.getElementById('menu-category-select').value;
+  const dayKey = document.getElementById('menu-day-select').value;
+
+  if (categoryValue) {
+    const exercises = Storage.getExercises().filter((ex) => ex.category === categoryValue);
+    title.textContent = `${categoryValue}のいつものセット`;
+    renderMenuItems(exercises, 'この部位の種目がまだ登録されていません。');
+    return;
+  }
+
+  if (dayKey) {
+    const dayInfo = ROUTINE_DAYS[dayKey];
+    const exercises = Storage.getExercises().filter((ex) => ex.day === dayKey);
+    title.textContent = `${dayInfo.label}のメニュー`;
+    renderMenuItems(exercises, 'この曜日の種目がまだ登録されていません。');
+    return;
+  }
+
+  title.textContent = '今日のメニュー';
+  document.getElementById('today-menu-list').innerHTML =
+    '<p class="empty-hint">曜日または部位を選ぶと、いつものセットが表示されます。</p>';
 }
 
 function populateExerciseSelect() {
@@ -297,6 +313,7 @@ function saveExerciseForm() {
   }
   closeExerciseForm();
   populateExerciseSelect();
+  populateMenuCategorySelect();
   document.getElementById('exercise-select').value = targetId;
   onExerciseChange(targetId);
 }
@@ -307,6 +324,7 @@ function deleteExerciseForm() {
   Storage.deleteExercise(editingExerciseId);
   closeExerciseForm();
   populateExerciseSelect();
+  populateMenuCategorySelect();
 }
 
 function saveSession() {
@@ -481,6 +499,15 @@ function importData(file) {
 }
 
 function setupEventListeners() {
+  document.getElementById('menu-day-select').addEventListener('change', () => {
+    document.getElementById('menu-category-select').value = '';
+    renderTodayMenu();
+  });
+  document.getElementById('menu-category-select').addEventListener('change', () => {
+    document.getElementById('menu-day-select').value = '';
+    renderTodayMenu();
+  });
+
   document.getElementById('exercise-select').addEventListener('change', (e) => onExerciseChange(e.target.value));
   document.getElementById('btn-add-exercise').addEventListener('click', () => openExerciseForm('add'));
   document.getElementById('btn-edit-exercise').addEventListener('click', () => {
@@ -542,6 +569,8 @@ function init() {
   setupEventListeners();
   populateExerciseSelect();
   populateCalorieOptions();
+  populateMenuCategorySelect();
+  document.getElementById('menu-day-select').value = routineDayForWeekday(new Date().getDay()) || '';
   renderHome();
 
   if ('serviceWorker' in navigator) {

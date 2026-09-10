@@ -20,7 +20,20 @@
 
   <section id="view-home" class="view active">
     <div class="card" id="today-menu-card">
-      <h2>今日のメニュー</h2>
+      <h2 id="today-menu-title">今日のメニュー</h2>
+      <div class="form-row">
+        <select id="menu-day-select">
+          <option value="">曜日で選ぶ</option>
+          <option value="tue">火曜日(胸・三頭筋)</option>
+          <option value="wed">水曜日(背中・二頭筋)</option>
+          <option value="thu">木曜日(脚・腹筋)</option>
+          <option value="fri">金曜日(肩・腕)</option>
+        </select>
+        <select id="menu-category-select">
+          <option value="">部位で選ぶ</option>
+        </select>
+      </div>
+      <div id="today-menu-list"></div>
     </div>
     <div class="card" id="home-calorie-card">
       <h2>今日の目標カロリー</h2>
