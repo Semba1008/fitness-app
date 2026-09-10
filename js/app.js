@@ -279,9 +279,6 @@ function bulkLogDay(dayKey) {
     });
   });
 
-  alert(
-    `${dayInfo.label}の記録をまとめて保存しました。実際と違う種目があれば、その種目を選び、履歴から編集できます。`
-  );
   renderWorkoutMenu();
   renderExerciseHistory();
   renderExerciseChart();
@@ -626,7 +623,6 @@ function saveSession() {
 
   if (editingSessionId) {
     Storage.updateWorkoutSession(editingSessionId, { sets: cleanSets });
-    alert('記録を更新しました。');
   } else {
     Storage.addWorkoutSession({
       id: `session_${Date.now()}`,
@@ -634,7 +630,6 @@ function saveSession() {
       exerciseId: currentExercise.id,
       sets: cleanSets,
     });
-    alert('記録を保存しました。');
   }
   onExerciseChange(currentExercise.id);
 }
@@ -660,7 +655,6 @@ function saveCardio() {
 
   if (editingSessionId) {
     Storage.updateWorkoutSession(editingSessionId, { cardio });
-    alert('記録を更新しました。');
   } else {
     Storage.addWorkoutSession({
       id: `session_${Date.now()}`,
@@ -668,7 +662,6 @@ function saveCardio() {
       exerciseId: currentExercise.id,
       cardio,
     });
-    alert('記録を保存しました。');
   }
   onExerciseChange(currentExercise.id);
 }
