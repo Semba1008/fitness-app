@@ -35,7 +35,7 @@
     </div>
     <div class="card" id="home-calorie-card">
       <h2>今日の目標カロリー</h2>
-      <p class="empty-hint">プロフィールが未設定です。「カロリー」タブで設定してください。</p>
+      <p class="empty-hint">プロフィールが未設定です。「体重」タブで設定してください。</p>
     </div>
     <div class="card">
       <h2>体重</h2>
@@ -67,6 +67,14 @@
       </div>
       <div id="workout-menu-list"></div>
       <button type="button" class="btn-primary" id="btn-save-day-workout" hidden>この曜日の内容をまとめて記録</button>
+    </div>
+
+    <div class="card">
+      <h2>日付で見る</h2>
+      <div class="form-row">
+        <input type="date" id="workout-log-date" />
+      </div>
+      <div id="workout-log-list"></div>
     </div>
 
     <div class="card">
@@ -187,21 +195,6 @@
       <h2>体重推移</h2>
       <canvas id="weight-chart" class="chart"></canvas>
     </div>
-    <div class="card" id="bmr-card">
-      <h2>基礎代謝(BMR)</h2>
-      <p class="empty-hint" id="bmr-empty-hint">プロフィール(性別・年齢・身長)を「カロリー」タブで設定すると、体重の記録から自動で計算されます。</p>
-      <div class="result-grid" id="bmr-result" hidden>
-        <div><span class="label">基礎代謝</span><span id="bmr-value">- kcal</span></div>
-        <div><span class="label">消費カロリー(TDEE)</span><span id="bmr-tdee-value">- kcal</span></div>
-      </div>
-    </div>
-    <div class="card">
-      <h2>体重の記録一覧</h2>
-      <div id="weight-history"></div>
-    </div>
-  </section>
-
-  <section id="view-calorie" class="view">
     <div class="card">
       <h2>プロフィール</h2>
       <div class="form-grid">
@@ -217,9 +210,6 @@
         <label>身長(cm)
           <input type="number" id="p-height" />
         </label>
-        <label>体重(kg)
-          <input type="number" id="p-weight" step="0.1" />
-        </label>
         <label>活動レベル
           <select id="p-activity"></select>
         </label>
@@ -227,23 +217,44 @@
           <select id="p-goal"></select>
         </label>
       </div>
-      <button class="btn-primary" id="btn-save-profile">保存して計算</button>
+      <button class="btn-primary" id="btn-save-profile">保存</button>
     </div>
 
-    <div class="card" id="calorie-result" hidden>
-      <h2>計算結果</h2>
-      <div class="result-grid">
-        <div><span class="label">BMI</span><span id="r-bmi">-</span></div>
-        <div><span class="label">基礎代謝(BMR)</span><span id="r-bmr">- kcal</span></div>
-        <div><span class="label">消費カロリー(TDEE)</span><span id="r-tdee">- kcal</span></div>
-        <div class="highlight"><span class="label">目標摂取カロリー</span><span id="r-target">- kcal</span></div>
+    <div class="card">
+      <h2>カロリー計算</h2>
+      <p class="empty-hint" id="calorie-empty-hint">プロフィールを設定し、体重を記録すると自動で計算されます。</p>
+      <div id="calorie-result" hidden>
+        <div class="result-grid">
+          <div><span class="label">BMI</span><span id="r-bmi">-</span></div>
+          <div><span class="label">基礎代謝(BMR)</span><span id="r-bmr">- kcal</span></div>
+          <div><span class="label">消費カロリー(TDEE)</span><span id="r-tdee">- kcal</span></div>
+          <div class="highlight"><span class="label">目標摂取カロリー</span><span id="r-target">- kcal</span></div>
+        </div>
+        <h3>PFCバランス(目安)</h3>
+        <div class="result-grid">
+          <div><span class="label">タンパク質</span><span id="r-protein">- g</span></div>
+          <div><span class="label">脂質</span><span id="r-fat">- g</span></div>
+          <div><span class="label">炭水化物</span><span id="r-carb">- g</span></div>
+        </div>
       </div>
-      <h3>PFCバランス(目安)</h3>
-      <div class="result-grid">
-        <div><span class="label">タンパク質</span><span id="r-protein">- g</span></div>
-        <div><span class="label">脂質</span><span id="r-fat">- g</span></div>
-        <div><span class="label">炭水化物</span><span id="r-carb">- g</span></div>
+    </div>
+
+    <div class="card">
+      <h2>体重の予測とカロリーコントロール</h2>
+      <p class="empty-hint" id="forecast-empty-hint">体重を3回以上記録すると、今後の体重変化をAIが予測します。</p>
+      <div id="forecast-result" hidden>
+        <div class="result-grid">
+          <div><span class="label">週あたりの変化</span><span id="forecast-weekly">-</span></div>
+          <div><span class="label">2週間後の予測</span><span id="forecast-2w">-</span></div>
+          <div><span class="label">1か月後の予測</span><span id="forecast-1m">-</span></div>
+        </div>
+        <p class="empty-hint" id="calorie-control-note"></p>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>体重の記録一覧</h2>
+      <div id="weight-history"></div>
     </div>
   </section>
 
@@ -272,7 +283,6 @@
   <button class="nav-btn active" data-view="view-home" data-title="ホーム">ホーム</button>
   <button class="nav-btn" data-view="view-workout" data-title="筋トレ">筋トレ</button>
   <button class="nav-btn" data-view="view-weight" data-title="体重">体重</button>
-  <button class="nav-btn" data-view="view-calorie" data-title="カロリー">カロリー</button>
   <button class="nav-btn" data-view="view-settings" data-title="設定">設定</button>
 </nav>
 

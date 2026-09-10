@@ -23,13 +23,14 @@ function switchView(viewId, title) {
     renderWorkoutMenu();
     renderExerciseHistory();
     renderExerciseChart();
+    renderWorkoutDayLog();
   }
   if (viewId === 'view-weight') {
     renderWeightChart();
     renderWeightHistory();
-    renderBmrCard();
+    populateCalorieOptions();
+    renderWeightForecast();
   }
-  if (viewId === 'view-calorie') populateCalorieOptions();
 }
 
 function setupNav() {
@@ -48,18 +49,18 @@ function renderHome() {
   const profile = Storage.getProfile();
   const card = document.getElementById('home-calorie-card');
   if (profile) {
-    const summary = Calorie.summarize(profile);
+    const summary = Calorie.summarize(getCalorieProfile());
     card.innerHTML = `
       <h2>今日の目標カロリー</h2>
       <div class="row-between">
         <span>${summary.target} kcal</span>
-        <button class="btn-secondary" data-goto="view-calorie">詳細</button>
+        <button class="btn-secondary" data-goto="view-weight">詳細</button>
       </div>`;
-    card.querySelector('[data-goto]').addEventListener('click', () => switchView('view-calorie', 'カロリー'));
+    card.querySelector('[data-goto]').addEventListener('click', () => switchView('view-weight', '体重'));
   } else {
     card.innerHTML = `
       <h2>今日の目標カロリー</h2>
-      <p class="empty-hint">プロフィールが未設定です。「カロリー」タブで設定してください。</p>`;
+      <p class="empty-hint">プロフィールが未設定です。「体重」タブで設定してください。</p>`;
   }
 
   const log = Storage.getWeightLog();
@@ -259,6 +260,7 @@ function bulkLogDay(dayKey) {
   renderWorkoutMenu();
   renderExerciseHistory();
   renderExerciseChart();
+  renderWorkoutDayLog();
 }
 
 function populateExerciseSelect() {
@@ -284,11 +286,17 @@ function populateExerciseSelect() {
 }
 
 function getUserWeightKg() {
-  const profile = Storage.getProfile();
-  if (profile && profile.weightKg) return profile.weightKg;
   const log = Storage.getWeightLog();
   if (log.length) return log[log.length - 1].weightKg;
+  const profile = Storage.getProfile();
+  if (profile && profile.weightKg) return profile.weightKg;
   return 60;
+}
+
+function getCalorieProfile() {
+  const profile = Storage.getProfile();
+  if (!profile) return null;
+  return { ...profile, weightKg: getUserWeightKg() };
 }
 
 function updateCardioCalories() {
@@ -516,6 +524,77 @@ function deleteSession(sessionId) {
   if (editingSessionId === sessionId) cancelEditSession();
   renderExerciseHistory();
   renderExerciseChart();
+  renderWorkoutDayLog();
+}
+
+function renderWorkoutDayLog() {
+  const dateInput = document.getElementById('workout-log-date');
+  const list = document.getElementById('workout-log-list');
+  const dateStr = dateInput.value;
+  const sessions = Storage.getWorkoutLog().filter((s) => s.date === dateStr);
+  if (!sessions.length) {
+    list.innerHTML = '<p class="empty-hint">この日の記録はありません。</p>';
+    return;
+  }
+  const exercises = Storage.getExercises();
+  list.innerHTML = sessions
+    .map((session) => {
+      const exercise = exercises.find((ex) => ex.id === session.exerciseId);
+      const name = exercise ? exercise.name : '(削除済みの種目)';
+      let badge;
+      let pillsHtml;
+      if (session.cardio) {
+        badge = `${Math.round(session.cardio.calories)}kcal`;
+        pillsHtml = `
+          <span class="set-pill">${session.cardio.durationMin}分</span>
+          <span class="set-pill">${session.cardio.speedKmh}km/h</span>
+          <span class="set-pill">傾斜${session.cardio.inclinePercent}%</span>`;
+      } else {
+        badge = `最大${Math.max(...session.sets.map((s) => s.weight))}kg`;
+        pillsHtml = session.sets
+          .map(
+            (s) =>
+              `<span class="set-pill">${s.weight}kg × ${s.reps}回${
+                s.rpe ? `<span class="pill-rpe">RPE${s.rpe}</span>` : ''
+              }</span>`
+          )
+          .join('');
+      }
+      return `
+      <div class="history-entry" data-id="${session.id}">
+        <div class="row-between">
+          <div class="history-date">
+            <strong>${name}</strong>
+            <span class="muted">${badge}</span>
+          </div>
+          <div class="history-actions">
+            <button class="btn-secondary btn-sm" data-action="edit">編集</button>
+            <button class="btn-danger btn-sm" data-action="delete">削除</button>
+          </div>
+        </div>
+        <div class="set-pills">${pillsHtml}</div>
+      </div>`;
+    })
+    .join('');
+}
+
+function editWorkoutDaySession(sessionId) {
+  const session = Storage.getWorkoutLog().find((s) => s.id === sessionId);
+  if (!session) return;
+  document.getElementById('exercise-select').value = session.exerciseId;
+  onExerciseChange(session.exerciseId);
+  if (session.cardio) startEditCardio(sessionId);
+  else startEditSession(sessionId);
+}
+
+function deleteWorkoutDaySession(sessionId) {
+  Storage.deleteWorkoutSession(sessionId);
+  if (editingSessionId === sessionId) cancelEditSession();
+  renderWorkoutDayLog();
+  if (currentExercise) {
+    renderExerciseHistory();
+    renderExerciseChart();
+  }
 }
 
 function openExerciseForm(mode, exercise) {
@@ -609,6 +688,7 @@ function saveSession() {
     });
   }
   onExerciseChange(currentExercise.id);
+  renderWorkoutDayLog();
 }
 
 function saveCardio() {
@@ -641,6 +721,7 @@ function saveCardio() {
     });
   }
   onExerciseChange(currentExercise.id);
+  renderWorkoutDayLog();
 }
 
 function saveWeight() {
@@ -660,24 +741,9 @@ function saveWeight() {
 
   renderWeightChart();
   renderWeightHistory();
-  renderBmrCard();
+  populateCalorieOptions();
+  renderWeightForecast();
   renderHome();
-}
-
-function renderBmrCard() {
-  const profile = Storage.getProfile();
-  const emptyHint = document.getElementById('bmr-empty-hint');
-  const result = document.getElementById('bmr-result');
-  if (!profile) {
-    emptyHint.hidden = false;
-    result.hidden = true;
-    return;
-  }
-  const summary = Calorie.summarize(profile);
-  emptyHint.hidden = true;
-  result.hidden = false;
-  document.getElementById('bmr-value').textContent = `${summary.bmr} kcal`;
-  document.getElementById('bmr-tdee-value').textContent = `${summary.tdee} kcal`;
 }
 
 function renderWeightChart() {
@@ -726,7 +792,8 @@ function deleteWeightEntry(date) {
   Storage.deleteWeightEntry(date);
   renderWeightChart();
   renderWeightHistory();
-  renderBmrCard();
+  populateCalorieOptions();
+  renderWeightForecast();
   renderHome();
 }
 
@@ -746,10 +813,12 @@ function populateCalorieOptions() {
     document.getElementById('p-gender').value = profile.gender;
     document.getElementById('p-age').value = profile.age;
     document.getElementById('p-height').value = profile.heightCm;
-    document.getElementById('p-weight').value = profile.weightKg;
     document.getElementById('p-activity').value = profile.activityLevel;
     document.getElementById('p-goal').value = profile.goal;
-    renderCalorieResult(profile);
+    renderCalorieResult();
+  } else {
+    document.getElementById('calorie-empty-hint').hidden = false;
+    document.getElementById('calorie-result').hidden = true;
   }
 }
 
@@ -758,22 +827,23 @@ function saveProfile() {
     gender: document.getElementById('p-gender').value,
     age: Number(document.getElementById('p-age').value),
     heightCm: Number(document.getElementById('p-height').value),
-    weightKg: Number(document.getElementById('p-weight').value),
+    weightKg: getUserWeightKg(),
     activityLevel: document.getElementById('p-activity').value,
     goal: document.getElementById('p-goal').value,
   };
-  if (!profile.age || !profile.heightCm || !profile.weightKg) {
-    alert('年齢・身長・体重を入力してください。');
+  if (!profile.age || !profile.heightCm) {
+    alert('年齢・身長を入力してください。');
     return;
   }
   Storage.saveProfile(profile);
-  renderCalorieResult(profile);
-  renderBmrCard();
+  renderCalorieResult();
+  renderWeightForecast();
   renderHome();
 }
 
-function renderCalorieResult(profile) {
-  const summary = Calorie.summarize(profile);
+function renderCalorieResult() {
+  const summary = Calorie.summarize(getCalorieProfile());
+  document.getElementById('calorie-empty-hint').hidden = true;
   document.getElementById('calorie-result').hidden = false;
   document.getElementById('r-bmi').textContent = summary.bmi;
   document.getElementById('r-bmr').textContent = `${summary.bmr} kcal`;
@@ -782,6 +852,60 @@ function renderCalorieResult(profile) {
   document.getElementById('r-protein').textContent = `${summary.macros.protein} g`;
   document.getElementById('r-fat').textContent = `${summary.macros.fat} g`;
   document.getElementById('r-carb').textContent = `${summary.macros.carb} g`;
+}
+
+function daysBetween(dateA, dateB) {
+  return Math.round((new Date(dateB) - new Date(dateA)) / 86400000);
+}
+
+function computeWeightTrend(minPoints = 3) {
+  const log = Storage.getWeightLog();
+  if (log.length < minPoints) return null;
+  const firstDate = log[0].date;
+  const points = log.map((e) => ({ x: daysBetween(firstDate, e.date), y: e.weightKg }));
+  const model = Stats.linearRegression(points);
+  return { model, lastX: points[points.length - 1].x };
+}
+
+function signedKg(value) {
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}`;
+}
+
+function renderWeightForecast() {
+  const emptyHint = document.getElementById('forecast-empty-hint');
+  const result = document.getElementById('forecast-result');
+  const trend = computeWeightTrend();
+  if (!trend) {
+    emptyHint.hidden = false;
+    result.hidden = true;
+    return;
+  }
+  emptyHint.hidden = true;
+  result.hidden = false;
+
+  const weeklyChange = trend.model.slope * 7;
+  document.getElementById('forecast-weekly').textContent = `${signedKg(weeklyChange)} kg/週`;
+  document.getElementById('forecast-2w').textContent = `${Math.round(trend.model.predict(trend.lastX + 14) * 10) / 10} kg`;
+  document.getElementById('forecast-1m').textContent = `${Math.round(trend.model.predict(trend.lastX + 30) * 10) / 10} kg`;
+
+  const noteEl = document.getElementById('calorie-control-note');
+  const profile = Storage.getProfile();
+  if (!profile) {
+    noteEl.textContent = 'プロフィールを設定すると、目標に対するカロリー調整の提案も表示されます。';
+    return;
+  }
+  const summary = Calorie.summarize(getCalorieProfile());
+  const expectedWeeklyKg = ((summary.target - summary.tdee) * 7) / 7700;
+  const gapKg = weeklyChange - expectedWeeklyKg;
+  if (Math.abs(gapKg) < 0.15) {
+    noteEl.textContent = `実測の体重変化(${signedKg(weeklyChange)}kg/週)は目標のペース(${signedKg(expectedWeeklyKg)}kg/週)とほぼ想定通りです。今のカロリー設定を続けましょう。`;
+    return;
+  }
+  const neededDeltaKcal = Math.round(((expectedWeeklyKg - weeklyChange) * 7700) / 7 / 10) * 10;
+  const action = neededDeltaKcal > 0 ? '増やす' : '減らす';
+  noteEl.textContent = `実測の体重変化は${signedKg(weeklyChange)}kg/週、目標のペースは${signedKg(
+    expectedWeeklyKg
+  )}kg/週です。1日の摂取カロリーを目安${Math.abs(neededDeltaKcal)}kcal${action}と、目標のペースに近づきます。`;
 }
 
 function exportData() {
@@ -841,6 +965,16 @@ function setupEventListeners() {
   document.getElementById('btn-save-day-workout').addEventListener('click', () => {
     const dayKey = document.getElementById('btn-save-day-workout').dataset.day;
     if (dayKey) bulkLogDay(dayKey);
+  });
+
+  document.getElementById('workout-log-date').addEventListener('change', renderWorkoutDayLog);
+  document.getElementById('workout-log-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const entry = e.target.closest('.history-entry');
+    const id = entry.dataset.id;
+    if (btn.dataset.action === 'edit') editWorkoutDaySession(id);
+    if (btn.dataset.action === 'delete') deleteWorkoutDaySession(id);
   });
 
   document.getElementById('exercise-select').addEventListener('change', (e) => onExerciseChange(e.target.value));
@@ -919,6 +1053,8 @@ function init() {
   populateCategorySelect('workout-menu-category-select');
   document.getElementById('workout-menu-day-select').value = routineDayForWeekday(new Date().getDay()) || '';
   renderWorkoutMenu();
+  document.getElementById('workout-log-date').valueAsDate = new Date();
+  renderWorkoutDayLog();
   initCalendarState();
   renderHome();
 
