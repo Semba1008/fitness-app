@@ -169,21 +169,59 @@ function renderCalendarDayDetail() {
   detail.innerHTML = sessions
     .map((session) => {
       const exercise = exercises.find((ex) => ex.id === session.exerciseId);
-      const setsHtml = session.sets
-        .map(
-          (s) =>
-            `<span class="set-pill">${s.weight}kg × ${s.reps}回${
-              s.rpe ? `<span class="pill-rpe">RPE${s.rpe}</span>` : ''
-            }</span>`
-        )
-        .join('');
+      const name = exercise ? exercise.name : '(削除済みの種目)';
+      let badge;
+      let pillsHtml;
+      if (session.cardio) {
+        badge = `${Math.round(session.cardio.calories)}kcal`;
+        pillsHtml = `
+          <span class="set-pill">${session.cardio.durationMin}分</span>
+          <span class="set-pill">${session.cardio.speedKmh}km/h</span>
+          <span class="set-pill">傾斜${session.cardio.inclinePercent}%</span>`;
+      } else {
+        badge = `最大${Math.max(...session.sets.map((s) => s.weight))}kg`;
+        pillsHtml = session.sets
+          .map(
+            (s) =>
+              `<span class="set-pill">${s.weight}kg × ${s.reps}回${
+                s.rpe ? `<span class="pill-rpe">RPE${s.rpe}</span>` : ''
+              }</span>`
+          )
+          .join('');
+      }
       return `
-      <div class="history-entry">
-        <strong>${exercise ? exercise.name : '(削除済みの種目)'}</strong>
-        <div class="set-pills">${setsHtml}</div>
+      <div class="history-entry" data-id="${session.id}">
+        <div class="row-between">
+          <div class="history-date">
+            <strong>${name}</strong>
+            <span class="muted">${badge}</span>
+          </div>
+          <div class="history-actions">
+            <button class="btn-secondary btn-sm" data-action="edit">編集</button>
+            <button class="btn-danger btn-sm" data-action="delete">削除</button>
+          </div>
+        </div>
+        <div class="set-pills">${pillsHtml}</div>
       </div>`;
     })
     .join('');
+}
+
+function editCalendarSession(sessionId) {
+  const session = Storage.getWorkoutLog().find((s) => s.id === sessionId);
+  if (!session) return;
+  switchView('view-workout', '筋トレ');
+  document.getElementById('exercise-select').value = session.exerciseId;
+  onExerciseChange(session.exerciseId);
+  if (session.cardio) startEditCardio(sessionId);
+  else startEditSession(sessionId);
+}
+
+function deleteCalendarSession(sessionId) {
+  Storage.deleteWorkoutSession(sessionId);
+  if (editingSessionId === sessionId) cancelEditSession();
+  renderCalendar();
+  renderCalendarDayDetail();
 }
 
 function renderWorkoutMenu() {
@@ -823,6 +861,14 @@ function setupEventListeners() {
       calendarYear += 1;
     }
     renderCalendar();
+  });
+  document.getElementById('calendar-day-detail').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const entry = e.target.closest('.history-entry');
+    const id = entry.dataset.id;
+    if (btn.dataset.action === 'edit') editCalendarSession(id);
+    if (btn.dataset.action === 'delete') deleteCalendarSession(id);
   });
 
   document.getElementById('workout-menu-day-select').addEventListener('change', () => {
