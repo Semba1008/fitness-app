@@ -51,6 +51,56 @@ function renderHome() {
   const log = Storage.getWeightLog();
   const latestEl = document.getElementById('home-latest-weight');
   latestEl.textContent = log.length ? `${log[log.length - 1].weightKg} kg (${log[log.length - 1].date})` : '記録なし';
+
+  renderTodayMenu();
+}
+
+function repRangeText(exercise) {
+  return exercise.repMin === exercise.repMax
+    ? `${exercise.repMin}回`
+    : `${exercise.repMin}〜${exercise.repMax}回`;
+}
+
+function renderTodayMenu() {
+  const card = document.getElementById('today-menu-card');
+  const dayKey = routineDayForWeekday(new Date().getDay());
+  const dayInfo = dayKey ? ROUTINE_DAYS[dayKey] : null;
+
+  if (!dayInfo) {
+    card.innerHTML = `
+      <h2>今日のメニュー</h2>
+      <p class="empty-hint">今日はルーティンの日ではありません。休養もトレーニングのうちです。</p>`;
+    return;
+  }
+
+  const exercises = Storage.getExercises().filter((ex) => ex.day === dayKey);
+  if (!exercises.length) {
+    card.innerHTML = `
+      <h2>今日のメニュー(${dayInfo.label})</h2>
+      <p class="empty-hint">この曜日の種目がまだ登録されていません。</p>`;
+    return;
+  }
+
+  card.innerHTML = `
+    <h2>今日のメニュー(${dayInfo.label})</h2>
+    <div id="today-menu-list"></div>`;
+  const list = card.querySelector('#today-menu-list');
+  list.innerHTML = exercises
+    .map(
+      (ex) => `
+      <button type="button" class="today-menu-item" data-exercise-id="${ex.id}">
+        <span>${ex.name}</span>
+        <span class="muted">${ex.targetSets || 3}セット×${repRangeText(ex)}</span>
+      </button>`
+    )
+    .join('');
+  list.querySelectorAll('[data-exercise-id]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      switchView('view-workout', '筋トレ');
+      document.getElementById('exercise-select').value = btn.dataset.exerciseId;
+      onExerciseChange(btn.dataset.exerciseId);
+    });
+  });
 }
 
 function populateExerciseSelect() {
@@ -209,6 +259,8 @@ function openExerciseForm(mode, exercise) {
   document.getElementById('ex-type').value = mode === 'edit' ? exercise.type : 'barbell';
   document.getElementById('ex-rep-min').value = mode === 'edit' ? exercise.repMin : 8;
   document.getElementById('ex-rep-max').value = mode === 'edit' ? exercise.repMax : 12;
+  document.getElementById('ex-target-sets').value = mode === 'edit' ? exercise.targetSets || 3 : 3;
+  document.getElementById('ex-day').value = mode === 'edit' && exercise.day ? exercise.day : '';
   document.getElementById('btn-delete-exercise').hidden = mode !== 'edit';
   document.getElementById('exercise-form-card').hidden = false;
 }
@@ -224,12 +276,15 @@ function saveExerciseForm() {
     alert('種目名を入力してください。');
     return;
   }
+  const dayValue = document.getElementById('ex-day').value;
   const fields = {
     name,
     category: document.getElementById('ex-category').value.trim() || 'その他',
     type: document.getElementById('ex-type').value,
     repMin: Number(document.getElementById('ex-rep-min').value) || 8,
     repMax: Number(document.getElementById('ex-rep-max').value) || 12,
+    targetSets: Number(document.getElementById('ex-target-sets').value) || 3,
+    day: dayValue || undefined,
   };
 
   let targetId;

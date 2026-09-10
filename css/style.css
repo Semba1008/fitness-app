@@ -160,6 +160,24 @@ button {
   gap: 6px;
 }
 
+.today-menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  font-size: 14px;
+  text-align: left;
+  color: var(--text);
+}
+
+.today-menu-item:first-child { margin-top: 0; }
+
 .btn-sm {
   width: auto;
   margin-top: 0;

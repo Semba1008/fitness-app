@@ -18,7 +18,10 @@
 
 <main id="views">
 
-  <section id="view-home" class="view">
+  <section id="view-home" class="view active">
+    <div class="card" id="today-menu-card">
+      <h2>今日のメニュー</h2>
+    </div>
     <div class="card" id="home-calorie-card">
       <h2>今日の目標カロリー</h2>
       <p class="empty-hint">プロフィールが未設定です。「カロリー」タブで設定してください。</p>
@@ -68,6 +71,18 @@
         </label>
         <label>目標レップ(上限)
           <input type="number" id="ex-rep-max" value="12" />
+        </label>
+        <label>目標セット数
+          <input type="number" id="ex-target-sets" value="3" />
+        </label>
+        <label>実施曜日
+          <select id="ex-day">
+            <option value="">なし</option>
+            <option value="tue">火曜日(胸・三頭筋)</option>
+            <option value="wed">水曜日(背中・二頭筋)</option>
+            <option value="thu">木曜日(脚・腹筋)</option>
+            <option value="fri">金曜日(肩・腕)</option>
+          </select>
         </label>
       </div>
       <div class="button-row">
@@ -203,6 +218,7 @@
 
 <script src="js/storage.js"></script>
 <script src="js/calorie.js"></script>
+<script src="js/ml.js"></script>
 <script src="js/workout.js"></script>
 <script src="js/chart.js"></script>
 <script src="js/app.js"></script>
