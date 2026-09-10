@@ -3,6 +3,7 @@ const STORAGE_KEYS = {
   weightLog: 'ft_weightLog',
   exercises: 'ft_exercises',
   workoutLog: 'ft_workoutLog',
+  routines: 'ft_routines',
 };
 
 const INCREMENTS = { barbell: 2.5, dumbbell: 1, machine: 5, bodyweight: 0 };
@@ -139,12 +140,33 @@ const Storage = {
       .sort((a, b) => a.date.localeCompare(b.date));
   },
 
+  getRoutines() {
+    return this._read(STORAGE_KEYS.routines, []);
+  },
+  saveRoutines(list) {
+    this._write(STORAGE_KEYS.routines, list);
+  },
+  addRoutine(routine) {
+    const list = this.getRoutines();
+    list.push(routine);
+    this.saveRoutines(list);
+  },
+  updateRoutine(id, fields) {
+    const list = this.getRoutines().map((r) => (r.id === id ? { ...r, ...fields } : r));
+    this.saveRoutines(list);
+  },
+  deleteRoutine(id) {
+    const list = this.getRoutines().filter((r) => r.id !== id);
+    this.saveRoutines(list);
+  },
+
   exportAll() {
     return {
       profile: this.getProfile(),
       weightLog: this.getWeightLog(),
       exercises: this.getExercises(),
       workoutLog: this.getWorkoutLog(),
+      routines: this.getRoutines(),
       exportedAt: new Date().toISOString(),
     };
   },
@@ -153,6 +175,7 @@ const Storage = {
     if (data.weightLog) this._write(STORAGE_KEYS.weightLog, data.weightLog);
     if (data.exercises) this.saveExercises(data.exercises);
     if (data.workoutLog) this._write(STORAGE_KEYS.workoutLog, data.workoutLog);
+    if (data.routines) this.saveRoutines(data.routines);
   },
   resetAll() {
     Object.values(STORAGE_KEYS).forEach((k) => localStorage.removeItem(k));

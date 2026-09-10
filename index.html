@@ -69,6 +69,26 @@
       <button type="button" class="btn-primary" id="btn-save-day-workout" hidden>この曜日の内容をまとめて記録</button>
     </div>
 
+    <div class="card" id="my-routines-card">
+      <h2>自分のメニュー</h2>
+      <div id="my-routines-list"></div>
+      <button type="button" class="btn-secondary" id="btn-add-routine">+ 新しいメニューを追加</button>
+    </div>
+
+    <div class="card" id="routine-form-card" hidden>
+      <h2 id="routine-form-title">メニューを追加</h2>
+      <label>メニュー名
+        <input type="text" id="routine-name" placeholder="例: 自分の胸トレメニュー" />
+      </label>
+      <label>含める種目</label>
+      <div id="routine-exercise-checklist" class="routine-checklist"></div>
+      <div class="button-row">
+        <button class="btn-primary" id="btn-save-routine">保存</button>
+        <button class="btn-secondary" id="btn-cancel-routine">キャンセル</button>
+      </div>
+      <button class="btn-danger" id="btn-delete-routine" hidden>このメニューを削除</button>
+    </div>
+
     <div class="card">
       <h2>日付で見る</h2>
       <div class="form-row">
@@ -77,12 +97,64 @@
       <div id="workout-log-list"></div>
     </div>
 
-    <div class="card">
-      <label>種目を選択(自由に選ぶ)</label>
-      <select id="exercise-select"></select>
-      <div class="button-row">
-        <button class="btn-secondary" id="btn-add-exercise">+ 種目を追加</button>
-        <button class="btn-secondary" id="btn-edit-exercise">この種目を編集</button>
+    <div class="card" id="exercise-log-card">
+      <div class="log-section">
+        <label>種目を選択(自由に選ぶ)</label>
+        <select id="exercise-select"></select>
+        <div class="button-row">
+          <button class="btn-secondary" id="btn-add-exercise">+ 種目を追加</button>
+          <button class="btn-secondary" id="btn-edit-exercise">この種目を編集</button>
+        </div>
+      </div>
+
+      <div class="log-section" id="suggestion-card" hidden>
+        <h2>次回の目安</h2>
+        <p id="suggestion-text"></p>
+        <div class="suggestion-values">
+          <div><span class="label">重量</span><span id="suggestion-weight">-</span></div>
+          <div><span class="label">目標回数</span><span id="suggestion-reps">-</span></div>
+          <div><span class="label">セット数</span><span id="suggestion-sets">-</span></div>
+        </div>
+      </div>
+
+      <div class="log-section">
+        <h2 id="exercise-chart-title">重量推移</h2>
+        <canvas id="exercise-chart" class="chart"></canvas>
+      </div>
+
+      <div class="log-section" id="strength-log-card">
+        <h2>今回の記録</h2>
+        <p class="empty-hint" id="edit-session-hint" hidden></p>
+        <div id="set-rows"></div>
+        <button class="btn-secondary" id="btn-add-set">+ セットを追加</button>
+        <button class="btn-primary" id="btn-save-session">この内容を保存</button>
+        <button class="btn-secondary" id="btn-cancel-edit-session" hidden>編集をキャンセル</button>
+      </div>
+
+      <div class="log-section" id="cardio-card" hidden>
+        <h2>有酸素運動の記録</h2>
+        <p class="empty-hint" id="cardio-edit-hint" hidden></p>
+        <div class="form-grid">
+          <label>時間(分)
+            <input type="number" id="cardio-duration" min="1" />
+          </label>
+          <label>速度(km/h)
+            <input type="number" id="cardio-speed" step="0.1" min="0" />
+          </label>
+          <label>傾斜(%)
+            <input type="number" id="cardio-incline" step="0.5" min="0" value="0" />
+          </label>
+        </div>
+        <div class="result-grid">
+          <div class="highlight"><span class="label">推定消費カロリー</span><span id="cardio-calories">- kcal</span></div>
+        </div>
+        <button class="btn-primary" id="btn-save-cardio">この内容を保存</button>
+        <button class="btn-secondary" id="btn-cancel-edit-cardio" hidden>編集をキャンセル</button>
+      </div>
+
+      <div class="log-section">
+        <h2>直近の履歴</h2>
+        <div id="exercise-history"></div>
       </div>
     </div>
 
@@ -129,56 +201,6 @@
         <button class="btn-secondary" id="btn-cancel-exercise">キャンセル</button>
       </div>
       <button class="btn-danger" id="btn-delete-exercise" hidden>この種目を削除</button>
-    </div>
-
-    <div class="card" id="suggestion-card" hidden>
-      <h2>次回の目安</h2>
-      <p id="suggestion-text"></p>
-      <div class="suggestion-values">
-        <div><span class="label">重量</span><span id="suggestion-weight">-</span></div>
-        <div><span class="label">目標回数</span><span id="suggestion-reps">-</span></div>
-        <div><span class="label">セット数</span><span id="suggestion-sets">-</span></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2 id="exercise-chart-title">重量推移</h2>
-      <canvas id="exercise-chart" class="chart"></canvas>
-    </div>
-
-    <div class="card" id="strength-log-card">
-      <h2>今回の記録</h2>
-      <p class="empty-hint" id="edit-session-hint" hidden></p>
-      <div id="set-rows"></div>
-      <button class="btn-secondary" id="btn-add-set">+ セットを追加</button>
-      <button class="btn-primary" id="btn-save-session">この内容を保存</button>
-      <button class="btn-secondary" id="btn-cancel-edit-session" hidden>編集をキャンセル</button>
-    </div>
-
-    <div class="card" id="cardio-card" hidden>
-      <h2>有酸素運動の記録</h2>
-      <p class="empty-hint" id="cardio-edit-hint" hidden></p>
-      <div class="form-grid">
-        <label>時間(分)
-          <input type="number" id="cardio-duration" min="1" />
-        </label>
-        <label>速度(km/h)
-          <input type="number" id="cardio-speed" step="0.1" min="0" />
-        </label>
-        <label>傾斜(%)
-          <input type="number" id="cardio-incline" step="0.5" min="0" value="0" />
-        </label>
-      </div>
-      <div class="result-grid">
-        <div class="highlight"><span class="label">推定消費カロリー</span><span id="cardio-calories">- kcal</span></div>
-      </div>
-      <button class="btn-primary" id="btn-save-cardio">この内容を保存</button>
-      <button class="btn-secondary" id="btn-cancel-edit-cardio" hidden>編集をキャンセル</button>
-    </div>
-
-    <div class="card">
-      <h2>直近の履歴</h2>
-      <div id="exercise-history"></div>
     </div>
   </section>
 
@@ -278,6 +300,8 @@
   </section>
 
 </main>
+
+<div id="toast" class="toast" hidden></div>
 
 <nav class="bottom-nav">
   <button class="nav-btn active" data-view="view-home" data-title="ホーム">ホーム</button>

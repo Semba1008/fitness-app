@@ -14,6 +14,23 @@ function todayDateStr() {
   return toDateStr(new Date());
 }
 
+let toastTimer = null;
+
+function showToast(message) {
+  if (navigator.vibrate) navigator.vibrate(30);
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.hidden = false;
+  requestAnimationFrame(() => toast.classList.add('show'));
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      toast.hidden = true;
+    }, 200);
+  }, 1400);
+}
+
 function switchView(viewId, title) {
   document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === viewId));
   document.querySelectorAll('.nav-btn').forEach((b) => b.classList.toggle('active', b.dataset.view === viewId));
@@ -21,6 +38,7 @@ function switchView(viewId, title) {
   if (viewId === 'view-home') renderHome();
   if (viewId === 'view-workout') {
     renderWorkoutMenu();
+    renderMyRoutines();
     renderExerciseHistory();
     renderExerciseChart();
     renderWorkoutDayLog();
@@ -236,11 +254,7 @@ function renderWorkoutMenu() {
   saveDayBtn.hidden = true;
 }
 
-function bulkLogDay(dayKey) {
-  const dayInfo = ROUTINE_DAYS[dayKey];
-  const exercises = Storage.getExercises().filter((ex) => ex.day === dayKey && ex.type !== 'cardio');
-  if (!exercises.length) return;
-
+function logExercisesWithSuggestions(exercises) {
   const today = todayDateStr();
   exercises.forEach((ex) => {
     const suggestion = Workout.suggestNext(ex);
@@ -256,8 +270,129 @@ function bulkLogDay(dayKey) {
       sets,
     });
   });
+}
 
+function bulkLogDay(dayKey) {
+  const dayInfo = ROUTINE_DAYS[dayKey];
+  const exercises = Storage.getExercises().filter((ex) => ex.day === dayKey && ex.type !== 'cardio');
+  if (!exercises.length) return;
+
+  logExercisesWithSuggestions(exercises);
+  showToast(`${dayInfo.label}の記録をまとめて保存しました`);
   renderWorkoutMenu();
+  renderExerciseHistory();
+  renderExerciseChart();
+  renderWorkoutDayLog();
+}
+
+let editingRoutineId = null;
+
+function renderMyRoutines() {
+  const list = document.getElementById('my-routines-list');
+  const routines = Storage.getRoutines();
+  if (!routines.length) {
+    list.innerHTML = '<p class="empty-hint">まだメニューがありません。「+ 新しいメニューを追加」から作成できます。</p>';
+    return;
+  }
+  const exercises = Storage.getExercises();
+  list.innerHTML = routines
+    .map((routine) => {
+      const items = routine.exerciseIds.map((id) => exercises.find((ex) => ex.id === id)).filter(Boolean);
+      const pills = items
+        .map((ex) => `<span class="set-pill" data-exercise-id="${ex.id}">${ex.name}</span>`)
+        .join('');
+      return `
+      <div class="history-entry" data-id="${routine.id}">
+        <div class="row-between">
+          <div class="history-date">
+            <strong>${routine.name}</strong>
+            <span class="muted">${items.length}種目</span>
+          </div>
+          <div class="history-actions">
+            <button class="btn-secondary btn-sm" data-action="edit">編集</button>
+            <button class="btn-danger btn-sm" data-action="delete">削除</button>
+          </div>
+        </div>
+        <div class="set-pills">${pills}</div>
+        <button type="button" class="btn-primary btn-sm" data-action="log-all">まとめて記録</button>
+      </div>`;
+    })
+    .join('');
+}
+
+function populateRoutineChecklist(selectedIds) {
+  const container = document.getElementById('routine-exercise-checklist');
+  const exercises = Storage.getExercises().filter((ex) => ex.type !== 'cardio');
+  container.innerHTML = exercises
+    .map(
+      (ex) => `
+      <label class="checklist-item">
+        <input type="checkbox" value="${ex.id}" ${selectedIds.includes(ex.id) ? 'checked' : ''} />
+        ${ex.name}(${ex.category})
+      </label>`
+    )
+    .join('');
+}
+
+function openRoutineForm(mode, routineId) {
+  const routine = mode === 'edit' ? Storage.getRoutines().find((r) => r.id === routineId) : null;
+  editingRoutineId = mode === 'edit' && routine ? routine.id : null;
+  document.getElementById('routine-form-title').textContent = mode === 'edit' ? 'メニューを編集' : 'メニューを追加';
+  document.getElementById('routine-name').value = mode === 'edit' && routine ? routine.name : '';
+  populateRoutineChecklist(mode === 'edit' && routine ? routine.exerciseIds : []);
+  document.getElementById('btn-delete-routine').hidden = mode !== 'edit';
+  document.getElementById('routine-form-card').hidden = false;
+}
+
+function closeRoutineForm() {
+  editingRoutineId = null;
+  document.getElementById('routine-form-card').hidden = true;
+}
+
+function saveRoutineForm() {
+  const name = document.getElementById('routine-name').value.trim();
+  if (!name) {
+    alert('メニュー名を入力してください。');
+    return;
+  }
+  const exerciseIds = Array.from(document.querySelectorAll('#routine-exercise-checklist input:checked')).map(
+    (el) => el.value
+  );
+  if (!exerciseIds.length) {
+    alert('種目を1つ以上選んでください。');
+    return;
+  }
+  if (editingRoutineId) {
+    Storage.updateRoutine(editingRoutineId, { name, exerciseIds });
+  } else {
+    Storage.addRoutine({ id: `routine_${Date.now()}`, name, exerciseIds });
+  }
+  closeRoutineForm();
+  showToast('メニューを保存しました');
+  renderMyRoutines();
+}
+
+function deleteRoutine(routineId) {
+  Storage.deleteRoutine(routineId);
+  if (editingRoutineId === routineId) closeRoutineForm();
+  showToast('メニューを削除しました');
+  renderMyRoutines();
+}
+
+function deleteRoutineForm() {
+  if (!editingRoutineId) return;
+  deleteRoutine(editingRoutineId);
+}
+
+function logRoutine(routineId) {
+  const routine = Storage.getRoutines().find((r) => r.id === routineId);
+  if (!routine) return;
+  const exercises = Storage.getExercises().filter(
+    (ex) => routine.exerciseIds.includes(ex.id) && ex.type !== 'cardio'
+  );
+  if (!exercises.length) return;
+  logExercisesWithSuggestions(exercises);
+  showToast(`${routine.name}をまとめて記録しました`);
   renderExerciseHistory();
   renderExerciseChart();
   renderWorkoutDayLog();
@@ -522,6 +657,7 @@ function deleteSession(sessionId) {
   if (!confirm('この記録を削除しますか?この操作は取り消せません。')) return;
   Storage.deleteWorkoutSession(sessionId);
   if (editingSessionId === sessionId) cancelEditSession();
+  showToast('削除しました');
   renderExerciseHistory();
   renderExerciseChart();
   renderWorkoutDayLog();
@@ -590,6 +726,7 @@ function editWorkoutDaySession(sessionId) {
 function deleteWorkoutDaySession(sessionId) {
   Storage.deleteWorkoutSession(sessionId);
   if (editingSessionId === sessionId) cancelEditSession();
+  showToast('削除しました');
   renderWorkoutDayLog();
   if (currentExercise) {
     renderExerciseHistory();
@@ -651,9 +788,11 @@ function saveExerciseForm() {
     Storage.addExercise({ id: targetId, ...fields });
   }
   closeExerciseForm();
+  showToast('種目を保存しました');
   populateExerciseSelect();
   populateCategorySelect('workout-menu-category-select');
   renderWorkoutMenu();
+  renderMyRoutines();
   document.getElementById('exercise-select').value = targetId;
   onExerciseChange(targetId);
 }
@@ -663,9 +802,11 @@ function deleteExerciseForm() {
   if (!confirm('この種目を削除しますか?この操作は取り消せません。')) return;
   Storage.deleteExercise(editingExerciseId);
   closeExerciseForm();
+  showToast('種目を削除しました');
   populateExerciseSelect();
   populateCategorySelect('workout-menu-category-select');
   renderWorkoutMenu();
+  renderMyRoutines();
 }
 
 function saveSession() {
@@ -679,6 +820,7 @@ function saveSession() {
 
   if (editingSessionId) {
     Storage.updateWorkoutSession(editingSessionId, { sets: cleanSets });
+    showToast('更新しました');
   } else {
     Storage.addWorkoutSession({
       id: `session_${Date.now()}`,
@@ -686,6 +828,7 @@ function saveSession() {
       exerciseId: currentExercise.id,
       sets: cleanSets,
     });
+    showToast('記録しました');
   }
   onExerciseChange(currentExercise.id);
   renderWorkoutDayLog();
@@ -712,6 +855,7 @@ function saveCardio() {
 
   if (editingSessionId) {
     Storage.updateWorkoutSession(editingSessionId, { cardio });
+    showToast('更新しました');
   } else {
     Storage.addWorkoutSession({
       id: `session_${Date.now()}`,
@@ -719,6 +863,7 @@ function saveCardio() {
       exerciseId: currentExercise.id,
       cardio,
     });
+    showToast('記録しました');
   }
   onExerciseChange(currentExercise.id);
   renderWorkoutDayLog();
@@ -739,6 +884,7 @@ function saveWeight() {
     Storage.saveProfile(profile);
   }
 
+  showToast('記録しました');
   renderWeightChart();
   renderWeightHistory();
   populateCalorieOptions();
@@ -790,6 +936,7 @@ function editWeightEntry(date) {
 function deleteWeightEntry(date) {
   if (!confirm('この体重記録を削除しますか?この操作は取り消せません。')) return;
   Storage.deleteWeightEntry(date);
+  showToast('削除しました');
   renderWeightChart();
   renderWeightHistory();
   populateCalorieOptions();
@@ -836,6 +983,7 @@ function saveProfile() {
     return;
   }
   Storage.saveProfile(profile);
+  showToast('プロフィールを保存しました');
   renderCalorieResult();
   renderWeightForecast();
   renderHome();
@@ -967,6 +1115,26 @@ function setupEventListeners() {
     if (dayKey) bulkLogDay(dayKey);
   });
 
+  document.getElementById('btn-add-routine').addEventListener('click', () => openRoutineForm('add'));
+  document.getElementById('btn-save-routine').addEventListener('click', saveRoutineForm);
+  document.getElementById('btn-cancel-routine').addEventListener('click', closeRoutineForm);
+  document.getElementById('btn-delete-routine').addEventListener('click', deleteRoutineForm);
+  document.getElementById('my-routines-list').addEventListener('click', (e) => {
+    const pill = e.target.closest('[data-exercise-id]');
+    if (pill) {
+      document.getElementById('exercise-select').value = pill.dataset.exerciseId;
+      onExerciseChange(pill.dataset.exerciseId);
+      return;
+    }
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const entry = e.target.closest('.history-entry');
+    const id = entry.dataset.id;
+    if (btn.dataset.action === 'edit') openRoutineForm('edit', id);
+    if (btn.dataset.action === 'delete') deleteRoutine(id);
+    if (btn.dataset.action === 'log-all') logRoutine(id);
+  });
+
   document.getElementById('workout-log-date').addEventListener('change', renderWorkoutDayLog);
   document.getElementById('workout-log-list').addEventListener('click', (e) => {
     const btn = e.target.closest('[data-action]');
@@ -1053,6 +1221,7 @@ function init() {
   populateCategorySelect('workout-menu-category-select');
   document.getElementById('workout-menu-day-select').value = routineDayForWeekday(new Date().getDay()) || '';
   renderWorkoutMenu();
+  renderMyRoutines();
   document.getElementById('workout-log-date').valueAsDate = new Date();
   renderWorkoutDayLog();
   initCalendarState();
