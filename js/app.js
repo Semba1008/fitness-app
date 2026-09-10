@@ -262,9 +262,6 @@ function bulkLogDay(dayKey) {
   const dayInfo = ROUTINE_DAYS[dayKey];
   const exercises = Storage.getExercises().filter((ex) => ex.day === dayKey && ex.type !== 'cardio');
   if (!exercises.length) return;
-  if (!confirm(`${dayInfo.label}の${exercises.length}種目を、いつもの目安の重量・回数でまとめて記録します。よろしいですか?`)) {
-    return;
-  }
 
   const today = todayDateStr();
   exercises.forEach((ex) => {
