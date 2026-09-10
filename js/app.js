@@ -215,6 +215,7 @@ function renderCalendarDayDetail() {
           <span class="muted">${badge}</span>
         </div>
         <div class="set-pills">${pillsHtml}</div>
+        <p class="ai-eval">${exercise ? evaluateSession(exercise, session) : ''}</p>
       </div>`;
     })
     .join('');
@@ -547,6 +548,34 @@ function renderSetRows() {
   });
 }
 
+function evaluateStrengthSession(exercise, session, priorSessions) {
+  if (!priorSessions.length) return '初回の記録です。';
+  const maxWeight = Math.max(...session.sets.map((s) => s.weight));
+  const allHitMin = session.sets.every((s) => s.reps >= exercise.repMin);
+  const bestPrevWeight = Math.max(...priorSessions.flatMap((s) => s.sets.map((x) => x.weight)));
+  if (maxWeight > bestPrevWeight) return '自己ベストを更新しました。';
+  if (!allHitMin) return '目標回数に届かないセットがありました。';
+  if (maxWeight === bestPrevWeight) return '自己ベストの重量を維持できています。';
+  return '安定した内容です。';
+}
+
+function evaluateCardioSession(session, priorSessions) {
+  if (!priorSessions.length) return '初回の記録です。';
+  const avgPrevCalories = priorSessions.reduce((sum, s) => sum + s.cardio.calories, 0) / priorSessions.length;
+  if (session.cardio.calories > avgPrevCalories * 1.1) return 'いつもより消費カロリーが多く、良いペースです。';
+  if (session.cardio.calories < avgPrevCalories * 0.9) return 'いつもより消費カロリーが少なめでした。';
+  return 'いつも通りの安定したペースです。';
+}
+
+function evaluateSession(exercise, session) {
+  const fullHistory = Storage.historyFor(exercise.id);
+  const idx = fullHistory.findIndex((s) => s.id === session.id);
+  const priorSessions = idx > 0 ? fullHistory.slice(0, idx) : [];
+  return session.cardio
+    ? evaluateCardioSession(session, priorSessions)
+    : evaluateStrengthSession(exercise, session, priorSessions);
+}
+
 function renderExerciseHistory() {
   if (!currentExercise) return;
   const container = document.getElementById('exercise-history');
@@ -576,6 +605,7 @@ function renderExerciseHistory() {
           <span class="set-pill">${session.cardio.speedKmh}km/h</span>
           <span class="set-pill">傾斜${session.cardio.inclinePercent}%</span>
         </div>
+        <p class="ai-eval">${evaluateSession(currentExercise, session)}</p>
       </div>`
       )
       .join('');
@@ -606,6 +636,7 @@ function renderExerciseHistory() {
           </div>
         </div>
         <div class="set-pills">${setsHtml}</div>
+        <p class="ai-eval">${evaluateSession(currentExercise, session)}</p>
       </div>`;
     })
     .join('');
@@ -709,6 +740,7 @@ function renderWorkoutDayLog() {
           </div>
         </div>
         <div class="set-pills">${pillsHtml}</div>
+        <p class="ai-eval">${exercise ? evaluateSession(exercise, session) : ''}</p>
       </div>`;
     })
     .join('');

@@ -305,6 +305,12 @@ button:active {
   font-size: 11px;
 }
 
+.ai-eval {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--primary);
+}
+
 .calendar-nav {
   display: flex;
   align-items: center;
