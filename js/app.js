@@ -2,6 +2,8 @@ let currentSets = [];
 let currentExercise = null;
 let editingSessionId = null;
 let editingExerciseId = null;
+let editingRoutineId = null;
+let editingWeightDate = null;
 let calendarYear = null;
 let calendarMonth = null;
 let calendarSelectedDate = null;
@@ -12,6 +14,23 @@ function toDateStr(date) {
 
 function todayDateStr() {
   return toDateStr(new Date());
+}
+
+function jumpToExercise(exerciseId) {
+  document.getElementById('exercise-select').value = exerciseId;
+  onExerciseChange(exerciseId);
+  document.getElementById('exercise-log-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function historyForCurrentType(exercise) {
+  const history = Storage.historyFor(exercise.id);
+  return exercise.type === 'cardio'
+    ? history.filter((s) => !!s.cardio)
+    : history.filter((s) => Array.isArray(s.sets));
+}
+
+function sessionMaxWeight(session) {
+  return Math.max(...session.sets.map((s) => s.weight));
 }
 
 let toastTimer = null;
@@ -125,7 +144,7 @@ function renderMenuItemsInto(listId, exercises, emptyMessage, onSelect) {
       (ex) => `
       <button type="button" class="today-menu-item" data-exercise-id="${ex.id}">
         <span>${ex.name}</span>
-        <span class="muted">${ex.targetSets || 3}セット×${repRangeText(ex)}</span>
+        <span class="muted">${ex.type === 'cardio' ? '有酸素運動' : `${ex.targetSets || 3}セット×${repRangeText(ex)}`}</span>
       </button>`
     )
     .join('');
@@ -155,7 +174,7 @@ function renderCalendar() {
     html += '<span class="calendar-day empty"></span>';
   }
   for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dateStr = toDateStr(new Date(calendarYear, calendarMonth, day));
     const classes = ['calendar-day'];
     if (dateStr === today) classes.push('today');
     if (dateStr === calendarSelectedDate) classes.push('selected');
@@ -226,10 +245,7 @@ function renderWorkoutMenu() {
   const saveDayBtn = document.getElementById('btn-save-day-workout');
   const categoryValue = document.getElementById('workout-menu-category-select').value;
   const dayKey = document.getElementById('workout-menu-day-select').value;
-  const selectHere = (exerciseId) => {
-    document.getElementById('exercise-select').value = exerciseId;
-    onExerciseChange(exerciseId);
-  };
+  const selectHere = (exerciseId) => jumpToExercise(exerciseId);
 
   if (categoryValue) {
     const exercises = Storage.getExercises().filter((ex) => ex.category === categoryValue);
@@ -286,8 +302,6 @@ function bulkLogDay(dayKey) {
   renderWorkoutDayLog();
 }
 
-let editingRoutineId = null;
-
 function renderMyRoutines() {
   const list = document.getElementById('my-routines-list');
   const routines = Storage.getRoutines();
@@ -300,8 +314,11 @@ function renderMyRoutines() {
     .map((routine) => {
       const items = routine.exerciseIds.map((id) => exercises.find((ex) => ex.id === id)).filter(Boolean);
       const pills = items
-        .map((ex) => `<span class="set-pill" data-exercise-id="${ex.id}">${ex.name}</span>`)
+        .map((ex) => `<span class="set-pill set-pill--clickable" data-exercise-id="${ex.id}">${ex.name}</span>`)
         .join('');
+      const logAllButton = items.length
+        ? `<button type="button" class="btn-primary btn-sm" data-action="log-all">まとめて記録</button>`
+        : `<p class="empty-hint">登録されていた種目がすべて削除されました。編集して種目を選び直してください。</p>`;
       return `
       <div class="history-entry" data-id="${routine.id}">
         <div class="row-between">
@@ -315,7 +332,7 @@ function renderMyRoutines() {
           </div>
         </div>
         <div class="set-pills">${pills}</div>
-        <button type="button" class="btn-primary btn-sm" data-action="log-all">まとめて記録</button>
+        ${logAllButton}
       </div>`;
     })
     .join('');
@@ -399,14 +416,23 @@ function logRoutine(routineId) {
   renderWorkoutDayLog();
 }
 
-function populateExerciseSelect() {
+function populateExerciseSelect(preferredId) {
   const select = document.getElementById('exercise-select');
   const exercises = Storage.getExercises();
-  select.innerHTML = exercises
-    .map((ex) => `<option value="${ex.id}">${ex.name}(${ex.category})</option>`)
+  const categories = [...new Set(exercises.map((ex) => ex.category))];
+  select.innerHTML = categories
+    .map((category) => {
+      const options = exercises
+        .filter((ex) => ex.category === category)
+        .map((ex) => `<option value="${ex.id}">${ex.name}</option>`)
+        .join('');
+      return `<optgroup label="${category}">${options}</optgroup>`;
+    })
     .join('');
   if (exercises.length) {
-    onExerciseChange(exercises[0].id);
+    const targetId = preferredId && exercises.some((ex) => ex.id === preferredId) ? preferredId : exercises[0].id;
+    select.value = targetId;
+    onExerciseChange(targetId);
   } else {
     currentExercise = null;
     currentSets = [];
@@ -455,7 +481,8 @@ function onExerciseChange(exerciseId) {
     document.getElementById('strength-log-card').hidden = true;
     document.getElementById('cardio-card').hidden = false;
 
-    const last = Storage.lastSessionFor(currentExercise.id);
+    const cardioHistory = historyForCurrentType(currentExercise);
+    const last = cardioHistory.length ? cardioHistory[cardioHistory.length - 1] : null;
     document.getElementById('cardio-duration').value = last ? last.cardio.durationMin : 30;
     document.getElementById('cardio-speed').value = last
       ? last.cardio.speedKmh
@@ -502,7 +529,7 @@ function renderExerciseChart() {
     drawLineChart(canvas, []);
     return;
   }
-  const history = Storage.historyFor(currentExercise.id);
+  const history = historyForCurrentType(currentExercise);
   if (currentExercise.type === 'cardio') {
     titleEl.textContent = '消費カロリー推移';
     const points = history.map((session) => ({
@@ -515,7 +542,7 @@ function renderExerciseChart() {
   titleEl.textContent = '重量推移';
   const points = history.map((session) => ({
     label: session.date.slice(5),
-    value: Math.max(...session.sets.map((s) => s.weight)),
+    value: sessionMaxWeight(session),
   }));
   drawLineChart(canvas, points);
 }
@@ -550,9 +577,9 @@ function renderSetRows() {
 
 function evaluateStrengthSession(exercise, session, priorSessions) {
   if (!priorSessions.length) return '初回の記録です。';
-  const maxWeight = Math.max(...session.sets.map((s) => s.weight));
+  const maxWeight = sessionMaxWeight(session);
   const allHitMin = session.sets.every((s) => s.reps >= exercise.repMin);
-  const bestPrevWeight = Math.max(...priorSessions.flatMap((s) => s.sets.map((x) => x.weight)));
+  const bestPrevWeight = Math.max(...priorSessions.map(sessionMaxWeight));
   if (maxWeight > bestPrevWeight) return '自己ベストを更新しました。';
   if (!allHitMin) return '目標回数に届かないセットがありました。';
   if (maxWeight === bestPrevWeight) return '自己ベストの重量を維持できています。';
@@ -568,7 +595,7 @@ function evaluateCardioSession(session, priorSessions) {
 }
 
 function evaluateSession(exercise, session) {
-  const fullHistory = Storage.historyFor(exercise.id);
+  const fullHistory = historyForCurrentType(exercise);
   const idx = fullHistory.findIndex((s) => s.id === session.id);
   const priorSessions = idx > 0 ? fullHistory.slice(0, idx) : [];
   return session.cardio
@@ -579,7 +606,7 @@ function evaluateSession(exercise, session) {
 function renderExerciseHistory() {
   if (!currentExercise) return;
   const container = document.getElementById('exercise-history');
-  const history = Storage.historyFor(currentExercise.id).slice(-5).reverse();
+  const history = historyForCurrentType(currentExercise).slice(-5).reverse();
   if (!history.length) {
     container.innerHTML = '<p class="empty-hint">まだ記録がありません。</p>';
     return;
@@ -614,7 +641,7 @@ function renderExerciseHistory() {
 
   container.innerHTML = history
     .map((session) => {
-      const maxWeight = Math.max(...session.sets.map((s) => s.weight));
+      const maxWeight = sessionMaxWeight(session);
       const setsHtml = session.sets
         .map(
           (s) =>
@@ -766,7 +793,8 @@ function deleteWorkoutDaySession(sessionId) {
   }
 }
 
-function openExerciseForm(mode, exercise) {
+function openExerciseForm(mode, exerciseId) {
+  const exercise = mode === 'edit' ? Storage.getExercises().find((ex) => ex.id === exerciseId) : null;
   editingExerciseId = mode === 'edit' && exercise ? exercise.id : null;
   document.getElementById('exercise-form-title').textContent =
     mode === 'edit' ? '種目を編集' : '種目を追加';
@@ -805,9 +833,9 @@ function saveExerciseForm() {
     category: document.getElementById('ex-category').value.trim() || 'その他',
     type: isCardio ? 'cardio' : typeValue,
     cardioMode: isCardio ? typeValue.replace('cardio_', '') : undefined,
-    repMin: Number(document.getElementById('ex-rep-min').value) || 8,
-    repMax: Number(document.getElementById('ex-rep-max').value) || 12,
-    targetSets: Number(document.getElementById('ex-target-sets').value) || 3,
+    repMin: isCardio ? undefined : Number(document.getElementById('ex-rep-min').value) || 8,
+    repMax: isCardio ? undefined : Number(document.getElementById('ex-rep-max').value) || 12,
+    targetSets: isCardio ? undefined : Number(document.getElementById('ex-target-sets').value) || 3,
     day: isCardio ? undefined : dayValue || undefined,
   };
 
@@ -821,12 +849,10 @@ function saveExerciseForm() {
   }
   closeExerciseForm();
   showToast('種目を保存しました');
-  populateExerciseSelect();
+  populateExerciseSelect(targetId);
   populateCategorySelect('workout-menu-category-select');
   renderWorkoutMenu();
   renderMyRoutines();
-  document.getElementById('exercise-select').value = targetId;
-  onExerciseChange(targetId);
 }
 
 function deleteExerciseForm() {
@@ -871,8 +897,8 @@ function saveCardio() {
   const durationMin = Number(document.getElementById('cardio-duration').value);
   const speedKmh = Number(document.getElementById('cardio-speed').value);
   const inclinePercent = Number(document.getElementById('cardio-incline').value) || 0;
-  if (!durationMin || !speedKmh) {
-    alert('時間と速度を入力してください。');
+  if (!durationMin || durationMin < 0 || !speedKmh || speedKmh < 0) {
+    alert('時間と速度を正しく入力してください。');
     return;
   }
   const met = Cardio.metFor(currentExercise.cardioMode, speedKmh, inclinePercent);
@@ -908,6 +934,9 @@ function saveWeight() {
     alert('日付と体重を入力してください。');
     return;
   }
+  if (editingWeightDate && editingWeightDate !== date) {
+    Storage.deleteWeightEntry(editingWeightDate);
+  }
   Storage.addWeightEntry({ date, weightKg: value });
 
   const profile = Storage.getProfile();
@@ -916,7 +945,8 @@ function saveWeight() {
     Storage.saveProfile(profile);
   }
 
-  showToast('記録しました');
+  showToast(editingWeightDate ? '更新しました' : '記録しました');
+  cancelEditWeight();
   renderWeightChart();
   renderWeightHistory();
   populateCalorieOptions();
@@ -960,14 +990,30 @@ function renderWeightHistory() {
 function editWeightEntry(date) {
   const entry = Storage.getWeightLog().find((e) => e.date === date);
   if (!entry) return;
+  editingWeightDate = entry.date;
   document.getElementById('weight-date').value = entry.date;
   document.getElementById('weight-value').value = entry.weightKg;
   document.getElementById('weight-value').focus();
+  document.getElementById('btn-save-weight').textContent = '更新する';
+  document.getElementById('btn-cancel-edit-weight').hidden = false;
+  const hint = document.getElementById('weight-edit-hint');
+  hint.hidden = false;
+  hint.textContent = `${formatDateLabel(entry.date)} の記録を編集中です。`;
+}
+
+function cancelEditWeight() {
+  editingWeightDate = null;
+  document.getElementById('btn-save-weight').textContent = '保存';
+  document.getElementById('btn-cancel-edit-weight').hidden = true;
+  document.getElementById('weight-edit-hint').hidden = true;
+  document.getElementById('weight-date').valueAsDate = new Date();
+  document.getElementById('weight-value').value = '';
 }
 
 function deleteWeightEntry(date) {
   if (!confirm('この体重記録を削除しますか?この操作は取り消せません。')) return;
   Storage.deleteWeightEntry(date);
+  if (editingWeightDate === date) cancelEditWeight();
   showToast('削除しました');
   renderWeightChart();
   renderWeightHistory();
@@ -997,6 +1043,7 @@ function populateCalorieOptions() {
     renderCalorieResult();
   } else {
     document.getElementById('calorie-empty-hint').hidden = false;
+    document.getElementById('calorie-fallback-hint').hidden = true;
     document.getElementById('calorie-result').hidden = true;
   }
 }
@@ -1024,6 +1071,7 @@ function saveProfile() {
 function renderCalorieResult() {
   const summary = Calorie.summarize(getCalorieProfile());
   document.getElementById('calorie-empty-hint').hidden = true;
+  document.getElementById('calorie-fallback-hint').hidden = Storage.getWeightLog().length > 0;
   document.getElementById('calorie-result').hidden = false;
   document.getElementById('r-bmi').textContent = summary.bmi;
   document.getElementById('r-bmr').textContent = `${summary.bmr} kcal`;
@@ -1154,8 +1202,7 @@ function setupEventListeners() {
   document.getElementById('my-routines-list').addEventListener('click', (e) => {
     const pill = e.target.closest('[data-exercise-id]');
     if (pill) {
-      document.getElementById('exercise-select').value = pill.dataset.exerciseId;
-      onExerciseChange(pill.dataset.exerciseId);
+      jumpToExercise(pill.dataset.exerciseId);
       return;
     }
     const btn = e.target.closest('[data-action]');
@@ -1181,7 +1228,7 @@ function setupEventListeners() {
   document.getElementById('btn-add-exercise').addEventListener('click', () => openExerciseForm('add'));
   document.getElementById('btn-edit-exercise').addEventListener('click', () => {
     if (!currentExercise) return;
-    openExerciseForm('edit', currentExercise);
+    openExerciseForm('edit', currentExercise.id);
   });
   document.getElementById('btn-save-exercise').addEventListener('click', saveExerciseForm);
   document.getElementById('btn-cancel-exercise').addEventListener('click', closeExerciseForm);
@@ -1230,6 +1277,7 @@ function setupEventListeners() {
 
   document.getElementById('weight-date').valueAsDate = new Date();
   document.getElementById('btn-save-weight').addEventListener('click', saveWeight);
+  document.getElementById('btn-cancel-edit-weight').addEventListener('click', cancelEditWeight);
 
   document.getElementById('btn-save-profile').addEventListener('click', saveProfile);
 
@@ -1258,6 +1306,11 @@ function init() {
   renderWorkoutDayLog();
   initCalendarState();
   renderHome();
+
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    renderWeightChart();
+    renderExerciseChart();
+  });
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());

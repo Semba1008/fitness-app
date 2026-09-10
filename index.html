@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#3b7cff" />
+<meta name="theme-color" content="#3b7cff" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#23262b" media="(prefers-color-scheme: dark)" />
 <title>マイトレーニング</title>
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
@@ -81,6 +82,7 @@
         <input type="text" id="routine-name" placeholder="例: 自分の胸トレメニュー" />
       </label>
       <label>含める種目</label>
+      <p class="empty-hint">有酸素運動は時間・速度の入力が必要なため、メニューには含められません。別途「種目を選択」から記録してください。</p>
       <div id="routine-exercise-checklist" class="routine-checklist"></div>
       <div class="button-row">
         <button class="btn-primary" id="btn-save-routine">保存</button>
@@ -207,11 +209,13 @@
   <section id="view-weight" class="view">
     <div class="card">
       <h2>体重を記録</h2>
+      <p class="empty-hint" id="weight-edit-hint" hidden></p>
       <div class="form-row">
         <input type="date" id="weight-date" />
         <input type="number" id="weight-value" step="0.1" placeholder="kg" />
       </div>
       <button class="btn-primary" id="btn-save-weight">保存</button>
+      <button class="btn-secondary" id="btn-cancel-edit-weight" hidden>編集をキャンセル</button>
     </div>
     <div class="card">
       <h2>体重推移</h2>
@@ -245,6 +249,7 @@
     <div class="card">
       <h2>カロリー計算</h2>
       <p class="empty-hint" id="calorie-empty-hint">プロフィールを設定し、体重を記録すると自動で計算されます。</p>
+      <p class="empty-hint" id="calorie-fallback-hint" hidden>体重がまだ記録されていないため、仮の体重(60kg)で計算しています。「体重を記録」から実際の体重を登録してください。</p>
       <div id="calorie-result" hidden>
         <div class="result-grid">
           <div><span class="label">BMI</span><span id="r-bmi">-</span></div>

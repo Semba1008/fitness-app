@@ -4,7 +4,7 @@ function roundToHalf(value) {
 
 const Workout = {
   suggestNext(exercise) {
-    const history = Storage.historyFor(exercise.id);
+    const history = Storage.historyFor(exercise.id).filter((s) => Array.isArray(s.sets));
     const last = history.length ? history[history.length - 1] : null;
     const increment = INCREMENTS[exercise.type];
 
