@@ -35,6 +35,7 @@
     <symbol id="icon-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" /></symbol>
     <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v13" /><polyline points="7 11 12 16 17 11" /><line x1="4" y1="20" x2="20" y2="20" /></symbol>
     <symbol id="icon-alert" viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3Z" /><line x1="12" y1="10" x2="12" y2="14" /><line x1="12" y1="17" x2="12.01" y2="17" /></symbol>
+    <symbol id="icon-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" /></symbol>
   </defs>
 </svg>
 
@@ -344,6 +345,42 @@
       <button class="btn-primary" id="btn-save-profile"><svg class="icon"><use href="#icon-check"></use></svg>保存</button>
     </div>
 
+    <div class="card" id="cloud-sync-card">
+      <h2><svg class="icon"><use href="#icon-cloud"></use></svg>クラウド同期</h2>
+      <div id="sync-not-configured">
+        <p class="muted">Supabaseの Project URL と anon public key を入力すると、複数端末間でデータを自動同期できます(未入力の場合はこの端末内にのみ保存されます)。</p>
+        <div class="form-grid">
+          <label>Project URL
+            <input type="text" id="sync-url" placeholder="https://xxxx.supabase.co" autocomplete="off" />
+          </label>
+          <label>anon public key
+            <input type="text" id="sync-anon-key" placeholder="eyJ..." autocomplete="off" />
+          </label>
+        </div>
+        <button class="btn-secondary" id="btn-sync-connect">接続する</button>
+      </div>
+      <div id="sync-auth-form" hidden>
+        <div class="form-grid">
+          <label>メールアドレス
+            <input type="email" id="sync-email" autocomplete="email" />
+          </label>
+          <label>パスワード
+            <input type="password" id="sync-password" autocomplete="current-password" />
+          </label>
+        </div>
+        <div class="button-row">
+          <button class="btn-primary" id="btn-sync-signin">ログイン</button>
+          <button class="btn-secondary" id="btn-sync-signup">新規登録</button>
+        </div>
+        <button class="btn-secondary" id="btn-sync-disconnect">接続情報を削除</button>
+      </div>
+      <div id="sync-signed-in" hidden>
+        <p><span id="sync-email-display"></span> でログイン中</p>
+        <button class="btn-secondary" id="btn-sync-signout">ログアウト</button>
+      </div>
+      <p class="muted" id="sync-message"></p>
+    </div>
+
     <div class="card">
       <h2><svg class="icon"><use href="#icon-download"></use></svg>データのバックアップ</h2>
       <button class="btn-secondary" id="btn-export">JSONでエクスポート</button>
@@ -362,7 +399,7 @@
     </div>
     <div class="card">
       <h2>このアプリについて</h2>
-      <p class="muted">すべてのデータはこの端末内(ブラウザのlocalStorage)にのみ保存され、外部には送信されません。</p>
+      <p class="muted">データは基本的にこの端末内(ブラウザのlocalStorage)に保存されます。「クラウド同期」でSupabaseの接続情報を設定してログインした場合のみ、あなた専用のデータベースに暗号化通信で送信され、複数端末間の同期に使われます。</p>
     </div>
   </section>
 
@@ -386,6 +423,9 @@
   <button class="nav-btn" data-view="view-settings" data-title="設定"><svg class="icon"><use href="#icon-settings"></use></svg>設定</button>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/sync.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/calorie.js"></script>
 <script src="js/ml.js"></script>

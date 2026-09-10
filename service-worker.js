@@ -1,9 +1,11 @@
-const CACHE_NAME = 'my-training-cache-v22';
+const CACHE_NAME = 'my-training-cache-v23';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './css/style.css',
+  './js/supabase-config.js',
+  './js/sync.js',
   './js/storage.js',
   './js/calorie.js',
   './js/ml.js',

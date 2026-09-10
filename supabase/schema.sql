@@ -8,6 +8,7 @@ create table if not exists public.profiles (
   gender text,
   age integer,
   height_cm numeric,
+  weight_kg numeric,
   activity_level text,
   goal text,
   updated_at timestamptz not null default now()

@@ -1327,6 +1327,104 @@ function renderWeightForecast() {
   )}kg/週です。1日の摂取カロリーを目安${Math.abs(adjustKcal)}kcal${action}と、無理なく目標のペースに近づきます。${capNote}`;
 }
 
+function refreshAllViews() {
+  populateExerciseSelect();
+  renderWorkoutMenu();
+  renderMyRoutines();
+  renderWorkoutDayLog();
+  renderCalendar();
+  renderWeightChart();
+  renderWeightHistory();
+  populateCalorieOptions();
+  renderWeightForecast();
+  renderHome();
+}
+
+function renderSyncUI(message) {
+  const notConfigured = document.getElementById('sync-not-configured');
+  const authForm = document.getElementById('sync-auth-form');
+  const signedIn = document.getElementById('sync-signed-in');
+  document.getElementById('sync-message').textContent = message || '';
+
+  if (!Sync.isConfigured()) {
+    notConfigured.hidden = false;
+    authForm.hidden = true;
+    signedIn.hidden = true;
+    document.getElementById('sync-url').value = Sync.getUrl();
+    document.getElementById('sync-anon-key').value = Sync.getKey();
+    return;
+  }
+  if (Sync.isSignedIn()) {
+    notConfigured.hidden = true;
+    authForm.hidden = true;
+    signedIn.hidden = false;
+    document.getElementById('sync-email-display').textContent = Sync.currentEmail();
+  } else {
+    notConfigured.hidden = true;
+    authForm.hidden = false;
+    signedIn.hidden = true;
+  }
+}
+
+function setupSyncEventListeners() {
+  document.getElementById('btn-sync-connect').addEventListener('click', () => {
+    const url = document.getElementById('sync-url').value.trim();
+    const key = document.getElementById('sync-anon-key').value.trim();
+    if (!url || !key) {
+      renderSyncUI('Project URLとanon keyの両方を入力してください。');
+      return;
+    }
+    Sync.setCredentials(url, key);
+    renderSyncUI('接続しました。ログインまたは新規登録してください。');
+  });
+
+  document.getElementById('btn-sync-signup').addEventListener('click', async () => {
+    const email = document.getElementById('sync-email').value.trim();
+    const password = document.getElementById('sync-password').value;
+    if (!email || !password) {
+      renderSyncUI('メールアドレスとパスワードを入力してください。');
+      return;
+    }
+    try {
+      renderSyncUI('登録中...');
+      await Sync.signUp(email, password);
+      renderSyncUI(Sync.isSignedIn() ? '登録してログインしました。データを同期しました。' : '確認メールを送信しました。メール内のリンクを確認後、ログインしてください。');
+      refreshAllViews();
+    } catch (err) {
+      renderSyncUI('登録に失敗しました: ' + (err.message || err));
+    }
+  });
+
+  document.getElementById('btn-sync-signin').addEventListener('click', async () => {
+    const email = document.getElementById('sync-email').value.trim();
+    const password = document.getElementById('sync-password').value;
+    if (!email || !password) {
+      renderSyncUI('メールアドレスとパスワードを入力してください。');
+      return;
+    }
+    try {
+      renderSyncUI('ログイン中...');
+      await Sync.signIn(email, password);
+      renderSyncUI('ログインし、データを同期しました。');
+      refreshAllViews();
+    } catch (err) {
+      renderSyncUI('ログインに失敗しました: ' + (err.message || err));
+    }
+  });
+
+  document.getElementById('btn-sync-signout').addEventListener('click', async () => {
+    await Sync.signOut();
+    renderSyncUI('ログアウトしました。');
+  });
+
+  document.getElementById('btn-sync-disconnect').addEventListener('click', () => {
+    if (confirm('Supabaseの接続情報を削除しますか?')) {
+      Sync.clearCredentials();
+      renderSyncUI('接続情報を削除しました。');
+    }
+  });
+}
+
 function downloadFile(filename, content, mimeType) {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
@@ -1557,6 +1655,7 @@ function setupEventListeners() {
 function init() {
   setupNav();
   setupEventListeners();
+  setupSyncEventListeners();
   populateExerciseSelect();
   populateCalorieOptions();
   populateCategorySelect('workout-menu-category-select');
@@ -1567,6 +1666,18 @@ function init() {
   renderWorkoutDayLog();
   initCalendarState();
   renderHome();
+  renderSyncUI();
+
+  if (Sync.isConfigured()) {
+    Sync.restoreSession().then((signedIn) => {
+      if (!signedIn) return;
+      renderSyncUI();
+      Sync.pullAndMerge().then(() => {
+        renderSyncUI();
+        refreshAllViews();
+      });
+    });
+  }
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());

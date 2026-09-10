@@ -77,21 +77,26 @@ const Storage = {
     return this._read(STORAGE_KEYS.profile, null);
   },
   saveProfile(profile) {
-    this._write(STORAGE_KEYS.profile, profile);
+    const stamped = { ...profile, updatedAt: Date.now() };
+    this._write(STORAGE_KEYS.profile, stamped);
+    if (typeof Sync !== 'undefined') Sync.pushProfile(stamped);
   },
 
   getWeightLog() {
     return this._read(STORAGE_KEYS.weightLog, []);
   },
   addWeightEntry(entry) {
+    const stamped = { ...entry, updatedAt: Date.now() };
     const log = this.getWeightLog().filter((e) => e.date !== entry.date);
-    log.push(entry);
+    log.push(stamped);
     log.sort((a, b) => a.date.localeCompare(b.date));
     this._write(STORAGE_KEYS.weightLog, log);
+    if (typeof Sync !== 'undefined') Sync.pushWeight(stamped);
   },
   deleteWeightEntry(date) {
     const log = this.getWeightLog().filter((e) => e.date !== date);
     this._write(STORAGE_KEYS.weightLog, log);
+    if (typeof Sync !== 'undefined') Sync.deleteWeight(date);
   },
 
   getExercises() {
@@ -101,34 +106,52 @@ const Storage = {
     this._write(STORAGE_KEYS.exercises, list);
   },
   addExercise(exercise) {
+    const stamped = { ...exercise, updatedAt: Date.now() };
     const list = this.getExercises();
-    list.push(exercise);
+    list.push(stamped);
     this.saveExercises(list);
+    if (typeof Sync !== 'undefined') Sync.pushExercise(stamped);
   },
   updateExercise(id, fields) {
-    const list = this.getExercises().map((ex) => (ex.id === id ? { ...ex, ...fields } : ex));
+    let updated = null;
+    const list = this.getExercises().map((ex) => {
+      if (ex.id !== id) return ex;
+      updated = { ...ex, ...fields, updatedAt: Date.now() };
+      return updated;
+    });
     this.saveExercises(list);
+    if (updated && typeof Sync !== 'undefined') Sync.pushExercise(updated);
   },
   deleteExercise(id) {
     const list = this.getExercises().filter((ex) => ex.id !== id);
     this.saveExercises(list);
+    if (typeof Sync !== 'undefined') Sync.deleteExercise(id);
   },
 
   getWorkoutLog() {
     return this._read(STORAGE_KEYS.workoutLog, []);
   },
   addWorkoutSession(session) {
+    const stamped = { ...session, updatedAt: Date.now() };
     const log = this.getWorkoutLog();
-    log.push(session);
+    log.push(stamped);
     this._write(STORAGE_KEYS.workoutLog, log);
+    if (typeof Sync !== 'undefined') Sync.pushSession(stamped);
   },
   updateWorkoutSession(id, fields) {
-    const log = this.getWorkoutLog().map((s) => (s.id === id ? { ...s, ...fields } : s));
+    let updated = null;
+    const log = this.getWorkoutLog().map((s) => {
+      if (s.id !== id) return s;
+      updated = { ...s, ...fields, updatedAt: Date.now() };
+      return updated;
+    });
     this._write(STORAGE_KEYS.workoutLog, log);
+    if (updated && typeof Sync !== 'undefined') Sync.pushSession(updated);
   },
   deleteWorkoutSession(id) {
     const log = this.getWorkoutLog().filter((s) => s.id !== id);
     this._write(STORAGE_KEYS.workoutLog, log);
+    if (typeof Sync !== 'undefined') Sync.deleteSession(id);
   },
   lastSessionFor(exerciseId) {
     const history = this.historyFor(exerciseId);
@@ -147,17 +170,26 @@ const Storage = {
     this._write(STORAGE_KEYS.routines, list);
   },
   addRoutine(routine) {
+    const stamped = { ...routine, updatedAt: Date.now() };
     const list = this.getRoutines();
-    list.push(routine);
+    list.push(stamped);
     this.saveRoutines(list);
+    if (typeof Sync !== 'undefined') Sync.pushRoutine(stamped);
   },
   updateRoutine(id, fields) {
-    const list = this.getRoutines().map((r) => (r.id === id ? { ...r, ...fields } : r));
+    let updated = null;
+    const list = this.getRoutines().map((r) => {
+      if (r.id !== id) return r;
+      updated = { ...r, ...fields, updatedAt: Date.now() };
+      return updated;
+    });
     this.saveRoutines(list);
+    if (updated && typeof Sync !== 'undefined') Sync.pushRoutine(updated);
   },
   deleteRoutine(id) {
     const list = this.getRoutines().filter((r) => r.id !== id);
     this.saveRoutines(list);
+    if (typeof Sync !== 'undefined') Sync.deleteRoutine(id);
   },
 
   exportAll() {
