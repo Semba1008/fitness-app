@@ -9,6 +9,7 @@ function switchView(viewId, title) {
   document.getElementById('page-title').textContent = title;
   if (viewId === 'view-home') renderHome();
   if (viewId === 'view-workout') {
+    renderWorkoutMenu();
     renderExerciseHistory();
     renderExerciseChart();
   }
@@ -50,9 +51,19 @@ function renderHome() {
 
   const log = Storage.getWeightLog();
   const latestEl = document.getElementById('home-latest-weight');
-  latestEl.textContent = log.length ? `${log[log.length - 1].weightKg} kg (${log[log.length - 1].date})` : '記録なし';
+  latestEl.textContent = log.length
+    ? `${log[log.length - 1].weightKg} kg (${formatDateLabel(log[log.length - 1].date)})`
+    : '記録なし';
 
   renderTodayMenu();
+}
+
+const WEEKDAY_LABELS_SHORT = ['日', '月', '火', '水', '木', '金', '土'];
+
+function formatDateLabel(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return `${m}/${d}(${WEEKDAY_LABELS_SHORT[date.getDay()]})`;
 }
 
 function repRangeText(exercise) {
@@ -61,8 +72,8 @@ function repRangeText(exercise) {
     : `${exercise.repMin}〜${exercise.repMax}回`;
 }
 
-function populateMenuCategorySelect() {
-  const select = document.getElementById('menu-category-select');
+function populateCategorySelect(selectId) {
+  const select = document.getElementById(selectId);
   const previous = select.value;
   const categories = [...new Set(Storage.getExercises().map((ex) => ex.category))];
   select.innerHTML =
@@ -70,8 +81,12 @@ function populateMenuCategorySelect() {
   select.value = categories.includes(previous) ? previous : '';
 }
 
-function renderMenuItems(exercises, emptyMessage) {
-  const list = document.getElementById('today-menu-list');
+function populateMenuCategorySelect() {
+  populateCategorySelect('menu-category-select');
+}
+
+function renderMenuItemsInto(listId, exercises, emptyMessage, onSelect) {
+  const list = document.getElementById(listId);
   if (!exercises.length) {
     list.innerHTML = `<p class="empty-hint">${emptyMessage}</p>`;
     return;
@@ -86,23 +101,26 @@ function renderMenuItems(exercises, emptyMessage) {
     )
     .join('');
   list.querySelectorAll('[data-exercise-id]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      switchView('view-workout', '筋トレ');
-      document.getElementById('exercise-select').value = btn.dataset.exerciseId;
-      onExerciseChange(btn.dataset.exerciseId);
-    });
+    btn.addEventListener('click', () => onSelect(btn.dataset.exerciseId));
   });
 }
 
 function renderTodayMenu() {
   const title = document.getElementById('today-menu-title');
+  const saveDayBtn = document.getElementById('btn-save-day');
   const categoryValue = document.getElementById('menu-category-select').value;
   const dayKey = document.getElementById('menu-day-select').value;
+  const goToWorkout = (exerciseId) => {
+    switchView('view-workout', '筋トレ');
+    document.getElementById('exercise-select').value = exerciseId;
+    onExerciseChange(exerciseId);
+  };
 
   if (categoryValue) {
     const exercises = Storage.getExercises().filter((ex) => ex.category === categoryValue);
     title.textContent = `${categoryValue}のいつものセット`;
-    renderMenuItems(exercises, 'この部位の種目がまだ登録されていません。');
+    renderMenuItemsInto('today-menu-list', exercises, 'この部位の種目がまだ登録されていません。', goToWorkout);
+    saveDayBtn.hidden = true;
     return;
   }
 
@@ -110,13 +128,75 @@ function renderTodayMenu() {
     const dayInfo = ROUTINE_DAYS[dayKey];
     const exercises = Storage.getExercises().filter((ex) => ex.day === dayKey);
     title.textContent = `${dayInfo.label}のメニュー`;
-    renderMenuItems(exercises, 'この曜日の種目がまだ登録されていません。');
+    renderMenuItemsInto('today-menu-list', exercises, 'この曜日の種目がまだ登録されていません。', goToWorkout);
+    saveDayBtn.hidden = exercises.length === 0;
+    saveDayBtn.dataset.day = dayKey;
     return;
   }
 
   title.textContent = '今日のメニュー';
   document.getElementById('today-menu-list').innerHTML =
     '<p class="empty-hint">曜日または部位を選ぶと、いつものセットが表示されます。</p>';
+  saveDayBtn.hidden = true;
+}
+
+function renderWorkoutMenu() {
+  const title = document.getElementById('workout-menu-title');
+  const categoryValue = document.getElementById('workout-menu-category-select').value;
+  const dayKey = document.getElementById('workout-menu-day-select').value;
+  const selectHere = (exerciseId) => {
+    document.getElementById('exercise-select').value = exerciseId;
+    onExerciseChange(exerciseId);
+  };
+
+  if (categoryValue) {
+    const exercises = Storage.getExercises().filter((ex) => ex.category === categoryValue);
+    title.textContent = `${categoryValue}のいつものセット`;
+    renderMenuItemsInto('workout-menu-list', exercises, 'この部位の種目がまだ登録されていません。', selectHere);
+    return;
+  }
+
+  if (dayKey) {
+    const dayInfo = ROUTINE_DAYS[dayKey];
+    const exercises = Storage.getExercises().filter((ex) => ex.day === dayKey);
+    title.textContent = `${dayInfo.label}のメニュー`;
+    renderMenuItemsInto('workout-menu-list', exercises, 'この曜日の種目がまだ登録されていません。', selectHere);
+    return;
+  }
+
+  title.textContent = 'いつものメニュー';
+  document.getElementById('workout-menu-list').innerHTML =
+    '<p class="empty-hint">曜日または部位を選ぶと、いつものセットからすぐに選べます。</p>';
+}
+
+function bulkLogDay(dayKey) {
+  const dayInfo = ROUTINE_DAYS[dayKey];
+  const exercises = Storage.getExercises().filter((ex) => ex.day === dayKey);
+  if (!exercises.length) return;
+  if (!confirm(`${dayInfo.label}の${exercises.length}種目を、いつもの目安の重量・回数でまとめて記録します。よろしいですか?`)) {
+    return;
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  exercises.forEach((ex) => {
+    const suggestion = Workout.suggestNext(ex);
+    const sets = Array.from({ length: suggestion.sets }, () => ({
+      weight: suggestion.weight === null ? 0 : suggestion.weight,
+      reps: suggestion.targetReps,
+      rpe: null,
+    }));
+    Storage.addWorkoutSession({
+      id: `session_${Date.now()}_${ex.id}`,
+      date: today,
+      exerciseId: ex.id,
+      sets,
+    });
+  });
+
+  alert(
+    `${dayInfo.label}の記録をまとめて保存しました。実際と違う種目があれば、「筋トレ」タブでその種目を選び、履歴から編集できます。`
+  );
+  renderTodayMenu();
 }
 
 function populateExerciseSelect() {
@@ -216,19 +296,28 @@ function renderExerciseHistory() {
   }
   container.innerHTML = history
     .map((session) => {
-      const setsText = session.sets
-        .map((s) => `${s.weight}kg×${s.reps}${s.rpe ? `(RPE${s.rpe})` : ''}`)
-        .join(' / ');
+      const maxWeight = Math.max(...session.sets.map((s) => s.weight));
+      const setsHtml = session.sets
+        .map(
+          (s) =>
+            `<span class="set-pill">${s.weight}kg × ${s.reps}回${
+              s.rpe ? `<span class="pill-rpe">RPE${s.rpe}</span>` : ''
+            }</span>`
+        )
+        .join('');
       return `
       <div class="history-entry" data-id="${session.id}">
         <div class="row-between">
-          <strong>${session.date}</strong>
+          <div class="history-date">
+            <strong>${formatDateLabel(session.date)}</strong>
+            <span class="muted">最大${maxWeight}kg</span>
+          </div>
           <div class="history-actions">
             <button class="btn-secondary btn-sm" data-action="edit">編集</button>
             <button class="btn-danger btn-sm" data-action="delete">削除</button>
           </div>
         </div>
-        <div>${setsText}</div>
+        <div class="set-pills">${setsHtml}</div>
       </div>`;
     })
     .join('');
@@ -248,7 +337,7 @@ function startEditSession(sessionId) {
   document.getElementById('btn-cancel-edit-session').hidden = false;
   const hint = document.getElementById('edit-session-hint');
   hint.hidden = false;
-  hint.textContent = `${session.date} の記録を編集中です。`;
+  hint.textContent = `${formatDateLabel(session.date)} の記録を編集中です。`;
 }
 
 function cancelEditSession() {
@@ -314,6 +403,8 @@ function saveExerciseForm() {
   closeExerciseForm();
   populateExerciseSelect();
   populateMenuCategorySelect();
+  populateCategorySelect('workout-menu-category-select');
+  renderWorkoutMenu();
   document.getElementById('exercise-select').value = targetId;
   onExerciseChange(targetId);
 }
@@ -325,6 +416,8 @@ function deleteExerciseForm() {
   closeExerciseForm();
   populateExerciseSelect();
   populateMenuCategorySelect();
+  populateCategorySelect('workout-menu-category-select');
+  renderWorkoutMenu();
 }
 
 function saveSession() {
@@ -390,7 +483,10 @@ function renderWeightHistory() {
       (entry) => `
       <div class="history-entry" data-date="${entry.date}">
         <div class="row-between">
-          <span>${entry.date}: ${entry.weightKg} kg</span>
+          <div class="history-date">
+            <strong>${entry.weightKg}kg</strong>
+            <span class="muted">${formatDateLabel(entry.date)}</span>
+          </div>
           <div class="history-actions">
             <button class="btn-secondary btn-sm" data-action="edit">編集</button>
             <button class="btn-danger btn-sm" data-action="delete">削除</button>
@@ -507,6 +603,19 @@ function setupEventListeners() {
     document.getElementById('menu-day-select').value = '';
     renderTodayMenu();
   });
+  document.getElementById('btn-save-day').addEventListener('click', () => {
+    const dayKey = document.getElementById('btn-save-day').dataset.day;
+    if (dayKey) bulkLogDay(dayKey);
+  });
+
+  document.getElementById('workout-menu-day-select').addEventListener('change', () => {
+    document.getElementById('workout-menu-category-select').value = '';
+    renderWorkoutMenu();
+  });
+  document.getElementById('workout-menu-category-select').addEventListener('change', () => {
+    document.getElementById('workout-menu-day-select').value = '';
+    renderWorkoutMenu();
+  });
 
   document.getElementById('exercise-select').addEventListener('change', (e) => onExerciseChange(e.target.value));
   document.getElementById('btn-add-exercise').addEventListener('click', () => openExerciseForm('add'));
@@ -571,10 +680,17 @@ function init() {
   populateCalorieOptions();
   populateMenuCategorySelect();
   document.getElementById('menu-day-select').value = routineDayForWeekday(new Date().getDay()) || '';
+  populateCategorySelect('workout-menu-category-select');
+  document.getElementById('workout-menu-day-select').value = routineDayForWeekday(new Date().getDay()) || '';
+  renderWorkoutMenu();
   renderHome();
 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
+    navigator.serviceWorker
+      .register('service-worker.js')
+      .then((reg) => reg.update())
+      .catch(() => {});
   }
 }
 

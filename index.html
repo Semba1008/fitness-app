@@ -34,6 +34,7 @@
         </select>
       </div>
       <div id="today-menu-list"></div>
+      <button type="button" class="btn-primary" id="btn-save-day" hidden>この曜日の内容をまとめて記録</button>
     </div>
     <div class="card" id="home-calorie-card">
       <h2>今日の目標カロリー</h2>
@@ -53,8 +54,25 @@
   </section>
 
   <section id="view-workout" class="view">
+    <div class="card" id="workout-menu-card">
+      <h2 id="workout-menu-title">いつものメニュー</h2>
+      <div class="form-row">
+        <select id="workout-menu-day-select">
+          <option value="">曜日で選ぶ</option>
+          <option value="tue">火曜日(胸・三頭筋)</option>
+          <option value="wed">水曜日(背中・二頭筋)</option>
+          <option value="thu">木曜日(脚・腹筋)</option>
+          <option value="fri">金曜日(肩・腕)</option>
+        </select>
+        <select id="workout-menu-category-select">
+          <option value="">部位で選ぶ</option>
+        </select>
+      </div>
+      <div id="workout-menu-list"></div>
+    </div>
+
     <div class="card">
-      <label>種目を選択</label>
+      <label>種目を選択(自由に選ぶ)</label>
       <select id="exercise-select"></select>
       <div class="button-row">
         <button class="btn-secondary" id="btn-add-exercise">+ 種目を追加</button>
@@ -106,7 +124,7 @@
     </div>
 
     <div class="card" id="suggestion-card" hidden>
-      <h2>AIの提案</h2>
+      <h2>次回の目安</h2>
       <p id="suggestion-text"></p>
       <div class="suggestion-values">
         <div><span class="label">重量</span><span id="suggestion-weight">-</span></div>

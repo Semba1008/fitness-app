@@ -66,7 +66,8 @@ main {
 .card h2 {
   margin: 0 0 10px;
   font-size: 15px;
-  color: var(--muted);
+  font-weight: 600;
+  color: var(--text);
 }
 
 .card h3 {
@@ -245,11 +246,46 @@ button {
 
 .history-entry {
   border-bottom: 1px solid var(--border);
-  padding: 8px 0;
+  padding: 12px 0;
   font-size: 14px;
 }
 
-.history-entry .row-between { margin-bottom: 4px; }
+.history-entry .row-between { margin-bottom: 4px; align-items: flex-start; }
+
+.history-date {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.history-date strong { font-size: 16px; }
+
+.history-date .muted { font-size: 12px; }
+
+.set-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.set-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.pill-rpe {
+  color: var(--muted);
+  font-size: 11px;
+}
 
 .history-entry:last-child { border-bottom: none; }
 

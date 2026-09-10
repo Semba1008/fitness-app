@@ -44,7 +44,7 @@ const Workout = {
           weight: roundToHalf(lastWeight * 0.9),
           targetReps: exercise.repMin,
           sets: sets.length,
-          note: `直近${Math.min(history.length, 3)}回の平均RPEが${recentAvgRpe.toFixed(1)}と高く、疲労が蓄積している可能性があります。統計モデルの提案により重量を減らして${exercise.repMin}回のディロードを行いましょう。`,
+          note: `直近${Math.min(history.length, 3)}回の平均RPEが${recentAvgRpe.toFixed(1)}と高く、疲労が蓄積している可能性があります。重量を少し落として${exercise.repMin}回、回復を優先しましょう。`,
         };
       }
     }
@@ -57,7 +57,7 @@ const Workout = {
         if (trend && trend.slopePerSession > 0) {
           const modelIncrement = trend.predicted - lastWeight;
           appliedIncrement = Math.min(Math.max(modelIncrement, increment * 0.5), increment * 3);
-          modelNote = `(過去${history.length}回の記録を回帰分析し、あなたの伸び率(約${trend.slopePerSession.toFixed(2)}kg/回)から重量を提案しています)`;
+          modelNote = `(過去${history.length}回の記録から、あなたの伸び(1回あたり約${trend.slopePerSession.toFixed(2)}kg)に合わせて重量を調整しています)`;
         }
       }
       let note = `前回すべてのセットで上限の${exercise.repMax}回に到達!重量を+${roundToHalf(appliedIncrement)}kgして${exercise.repMin}回を目指しましょう。${modelNote}`;
