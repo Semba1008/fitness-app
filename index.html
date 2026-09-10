@@ -19,22 +19,19 @@
 <main id="views">
 
   <section id="view-home" class="view active">
-    <div class="card" id="today-menu-card">
-      <h2 id="today-menu-title">今日のメニュー</h2>
-      <div class="form-row">
-        <select id="menu-day-select">
-          <option value="">曜日で選ぶ</option>
-          <option value="tue">火曜日(胸・三頭筋)</option>
-          <option value="wed">水曜日(背中・二頭筋)</option>
-          <option value="thu">木曜日(脚・腹筋)</option>
-          <option value="fri">金曜日(肩・腕)</option>
-        </select>
-        <select id="menu-category-select">
-          <option value="">部位で選ぶ</option>
-        </select>
+    <div class="card" id="calendar-card">
+      <h2>記録カレンダー</h2>
+      <div class="calendar-nav">
+        <button type="button" class="btn-secondary btn-sm" id="btn-cal-prev">‹ 前の月</button>
+        <span id="calendar-month-label"></span>
+        <button type="button" class="btn-secondary btn-sm" id="btn-cal-next">次の月 ›</button>
       </div>
-      <div id="today-menu-list"></div>
-      <button type="button" class="btn-primary" id="btn-save-day" hidden>この曜日の内容をまとめて記録</button>
+      <div class="calendar-weekdays">
+        <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
+      </div>
+      <div id="calendar-grid" class="calendar-grid"></div>
+      <h3 id="calendar-day-title">今日の記録</h3>
+      <div id="calendar-day-detail"></div>
     </div>
     <div class="card" id="home-calorie-card">
       <h2>今日の目標カロリー</h2>
@@ -69,6 +66,7 @@
         </select>
       </div>
       <div id="workout-menu-list"></div>
+      <button type="button" class="btn-primary" id="btn-save-day-workout" hidden>この曜日の内容をまとめて記録</button>
     </div>
 
     <div class="card">
@@ -95,6 +93,8 @@
             <option value="dumbbell">ダンベル</option>
             <option value="machine">マシン</option>
             <option value="bodyweight">自重</option>
+            <option value="cardio_walk">有酸素(ウォーキング系)</option>
+            <option value="cardio_run">有酸素(ランニング系)</option>
           </select>
         </label>
         <label>目標レップ(下限)
@@ -134,17 +134,38 @@
     </div>
 
     <div class="card">
-      <h2>重量推移</h2>
+      <h2 id="exercise-chart-title">重量推移</h2>
       <canvas id="exercise-chart" class="chart"></canvas>
     </div>
 
-    <div class="card">
+    <div class="card" id="strength-log-card">
       <h2>今回の記録</h2>
       <p class="empty-hint" id="edit-session-hint" hidden></p>
       <div id="set-rows"></div>
       <button class="btn-secondary" id="btn-add-set">+ セットを追加</button>
       <button class="btn-primary" id="btn-save-session">この内容を保存</button>
       <button class="btn-secondary" id="btn-cancel-edit-session" hidden>編集をキャンセル</button>
+    </div>
+
+    <div class="card" id="cardio-card" hidden>
+      <h2>有酸素運動の記録</h2>
+      <p class="empty-hint" id="cardio-edit-hint" hidden></p>
+      <div class="form-grid">
+        <label>時間(分)
+          <input type="number" id="cardio-duration" min="1" />
+        </label>
+        <label>速度(km/h)
+          <input type="number" id="cardio-speed" step="0.1" min="0" />
+        </label>
+        <label>傾斜(%)
+          <input type="number" id="cardio-incline" step="0.5" min="0" value="0" />
+        </label>
+      </div>
+      <div class="result-grid">
+        <div class="highlight"><span class="label">推定消費カロリー</span><span id="cardio-calories">- kcal</span></div>
+      </div>
+      <button class="btn-primary" id="btn-save-cardio">この内容を保存</button>
+      <button class="btn-secondary" id="btn-cancel-edit-cardio" hidden>編集をキャンセル</button>
     </div>
 
     <div class="card">
@@ -165,6 +186,14 @@
     <div class="card">
       <h2>体重推移</h2>
       <canvas id="weight-chart" class="chart"></canvas>
+    </div>
+    <div class="card" id="bmr-card">
+      <h2>基礎代謝(BMR)</h2>
+      <p class="empty-hint" id="bmr-empty-hint">プロフィール(性別・年齢・身長)を「カロリー」タブで設定すると、体重の記録から自動で計算されます。</p>
+      <div class="result-grid" id="bmr-result" hidden>
+        <div><span class="label">基礎代謝</span><span id="bmr-value">- kcal</span></div>
+        <div><span class="label">消費カロリー(TDEE)</span><span id="bmr-tdee-value">- kcal</span></div>
+      </div>
     </div>
     <div class="card">
       <h2>体重の記録一覧</h2>
@@ -250,6 +279,7 @@
 <script src="js/storage.js"></script>
 <script src="js/calorie.js"></script>
 <script src="js/ml.js"></script>
+<script src="js/cardio.js"></script>
 <script src="js/workout.js"></script>
 <script src="js/chart.js"></script>
 <script src="js/app.js"></script>

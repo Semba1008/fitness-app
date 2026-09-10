@@ -53,6 +53,10 @@ const DEFAULT_EXERCISES = [
   { id: 'deadlift', name: 'デッドリフト', category: '背中', type: 'barbell', repMin: 5, repMax: 8, targetSets: 3 },
   { id: 'curl', name: 'ダンベルカール', category: '腕', type: 'dumbbell', repMin: 8, repMax: 12, targetSets: 3 },
   { id: 'pullup', name: '懸垂', category: '背中', type: 'bodyweight', repMin: 6, repMax: 12, targetSets: 3 },
+
+  // 有酸素運動
+  { id: 'incline_walk', name: '傾斜ウォーキング', category: '有酸素', type: 'cardio', cardioMode: 'walk' },
+  { id: 'running', name: 'ランニング', category: '有酸素', type: 'cardio', cardioMode: 'run' },
 ];
 
 const Storage = {

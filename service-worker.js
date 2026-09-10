@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-training-cache-v9';
+const CACHE_NAME = 'my-training-cache-v11';
 const ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const ASSETS = [
   './js/storage.js',
   './js/calorie.js',
   './js/ml.js',
+  './js/cardio.js',
   './js/workout.js',
   './js/chart.js',
   './js/app.js',
