@@ -34,6 +34,29 @@ function sessionMaxWeight(session) {
   return Math.max(...session.sets.map((s) => s.weight));
 }
 
+function sessionBadgeAndPills(session) {
+  if (session.cardio) {
+    return {
+      badge: `${Math.round(session.cardio.calories)}kcal`,
+      pillsHtml: `
+        <span class="set-pill">${session.cardio.durationMin}分</span>
+        <span class="set-pill">${session.cardio.speedKmh}km/h</span>
+        <span class="set-pill">傾斜${session.cardio.inclinePercent}%</span>`,
+    };
+  }
+  return {
+    badge: `最大${sessionMaxWeight(session)}kg`,
+    pillsHtml: session.sets
+      .map(
+        (s) =>
+          `<span class="set-pill">${s.weight}kg × ${s.reps}回${
+            s.rpe ? `<span class="pill-rpe">RPE${s.rpe}</span>` : ''
+          }</span>`
+      )
+      .join(''),
+  };
+}
+
 let toastTimer = null;
 
 function showToast(message) {
@@ -145,6 +168,34 @@ function renderHome() {
 
 function renderHomeMenu() {
   const container = document.getElementById('home-menu-list');
+  const titleEl = document.getElementById('home-menu-title');
+  const today = todayDateStr();
+  const todaysSessions = Storage.getWorkoutLog().filter((s) => s.date === today);
+
+  if (todaysSessions.length) {
+    titleEl.textContent = '本日のトレーニング(記録済み)';
+    const exercises = Storage.getExercises();
+    const entriesHtml = todaysSessions
+      .map((session) => {
+        const exercise = exercises.find((ex) => ex.id === session.exerciseId);
+        const name = exercise ? exercise.name : '(削除済みの種目)';
+        const { badge, pillsHtml } = sessionBadgeAndPills(session);
+        return `
+        <div class="history-entry">
+          <div class="history-date">
+            <strong>${name}</strong>
+            <span class="muted">${badge}</span>
+          </div>
+          <div class="set-pills">${pillsHtml}</div>
+        </div>`;
+      })
+      .join('');
+    container.innerHTML = `${entriesHtml}<button type="button" class="btn-secondary" id="btn-home-add-more"><svg class="icon"><use href="#icon-plus"></use></svg>追加で記録する</button>`;
+    document.getElementById('btn-home-add-more').addEventListener('click', () => switchView('view-workout', '筋トレ'));
+    return;
+  }
+
+  titleEl.textContent = '本日のメニュー';
   const dayKey = routineDayForWeekday(new Date().getDay());
   if (!dayKey) {
     container.innerHTML = '<p class="empty-hint">今日はルーティンの日ではありません。休養もトレーニングのうちです。</p>';
@@ -304,25 +355,7 @@ function renderCalendarDayDetail() {
     .map((session) => {
       const exercise = exercises.find((ex) => ex.id === session.exerciseId);
       const name = exercise ? exercise.name : '(削除済みの種目)';
-      let badge;
-      let pillsHtml;
-      if (session.cardio) {
-        badge = `${Math.round(session.cardio.calories)}kcal`;
-        pillsHtml = `
-          <span class="set-pill">${session.cardio.durationMin}分</span>
-          <span class="set-pill">${session.cardio.speedKmh}km/h</span>
-          <span class="set-pill">傾斜${session.cardio.inclinePercent}%</span>`;
-      } else {
-        badge = `最大${Math.max(...session.sets.map((s) => s.weight))}kg`;
-        pillsHtml = session.sets
-          .map(
-            (s) =>
-              `<span class="set-pill">${s.weight}kg × ${s.reps}回${
-                s.rpe ? `<span class="pill-rpe">RPE${s.rpe}</span>` : ''
-              }</span>`
-          )
-          .join('');
-      }
+      const { badge, pillsHtml } = sessionBadgeAndPills(session);
       return `
       <div class="history-entry">
         <div class="history-date">
@@ -834,25 +867,7 @@ function renderWorkoutDayLog() {
     .map((session) => {
       const exercise = exercises.find((ex) => ex.id === session.exerciseId);
       const name = exercise ? exercise.name : '(削除済みの種目)';
-      let badge;
-      let pillsHtml;
-      if (session.cardio) {
-        badge = `${Math.round(session.cardio.calories)}kcal`;
-        pillsHtml = `
-          <span class="set-pill">${session.cardio.durationMin}分</span>
-          <span class="set-pill">${session.cardio.speedKmh}km/h</span>
-          <span class="set-pill">傾斜${session.cardio.inclinePercent}%</span>`;
-      } else {
-        badge = `最大${Math.max(...session.sets.map((s) => s.weight))}kg`;
-        pillsHtml = session.sets
-          .map(
-            (s) =>
-              `<span class="set-pill">${s.weight}kg × ${s.reps}回${
-                s.rpe ? `<span class="pill-rpe">RPE${s.rpe}</span>` : ''
-              }</span>`
-          )
-          .join('');
-      }
+      const { badge, pillsHtml } = sessionBadgeAndPills(session);
       return `
       <div class="history-entry" data-id="${session.id}">
         <div class="row-between">
