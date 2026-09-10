@@ -1122,6 +1122,14 @@ function renderWeightForecast() {
     noteEl.textContent = 'プロフィールを設定すると、目標に対するカロリー調整の提案も表示されます。';
     return;
   }
+
+  const log = Storage.getWeightLog();
+  const spanDays = daysBetween(log[0].date, log[log.length - 1].date);
+  if (log.length < 5 || spanDays < 7) {
+    noteEl.textContent = 'カロリー調整の提案には、7日以上・5回以上の体重記録が必要です(体重は日々の水分などで変動するため、短い期間の記録だけでは判断できません)。';
+    return;
+  }
+
   const summary = Calorie.summarize(getCalorieProfile());
   const expectedWeeklyKg = ((summary.target - summary.tdee) * 7) / 7700;
   const gapKg = weeklyChange - expectedWeeklyKg;
@@ -1129,11 +1137,35 @@ function renderWeightForecast() {
     noteEl.textContent = `実測の体重変化(${signedKg(weeklyChange)}kg/週)は目標のペース(${signedKg(expectedWeeklyKg)}kg/週)とほぼ想定通りです。今のカロリー設定を続けましょう。`;
     return;
   }
-  const neededDeltaKcal = Math.round(((expectedWeeklyKg - weeklyChange) * 7700) / 7 / 10) * 10;
-  const action = neededDeltaKcal > 0 ? '増やす' : '減らす';
+
+  // 安全のため、1日あたりの調整幅は±500kcal(週あたり約0.5kgの変化に相当)を超えて提案しない。
+  const MAX_DAILY_ADJUSTMENT_KCAL = 500;
+  const rawDeltaKcal = ((expectedWeeklyKg - weeklyChange) * 7700) / 7;
+  let adjustKcal = Math.round(Math.max(-MAX_DAILY_ADJUSTMENT_KCAL, Math.min(MAX_DAILY_ADJUSTMENT_KCAL, rawDeltaKcal)) / 10) * 10;
+
+  // 性別ごとの目安下限とBMRのうち高い方を下回らないようにする(極端な低カロリーを提案しない)。
+  const genderFloor = profile.gender === 'female' ? 1200 : 1500;
+  const safeFloor = Math.max(Math.round(summary.bmr), genderFloor);
+  if (summary.target + adjustKcal < safeFloor) {
+    adjustKcal = safeFloor - summary.target;
+  }
+
+  const wasCapped = Math.abs(rawDeltaKcal) > Math.abs(adjustKcal) + 5;
+  const action = adjustKcal > 0 ? '増やす' : '減らす';
+  const capNote = wasCapped
+    ? '(急激な変化は体に負担がかかるため、安全な範囲までの調整にとどめています。数週間続けて様子を見ましょう)'
+    : '';
+
+  if (Math.abs(adjustKcal) < 10) {
+    noteEl.textContent = `実測の体重変化(${signedKg(weeklyChange)}kg/週)は目標のペース(${signedKg(
+      expectedWeeklyKg
+    )}kg/週)から少しずれていますが、これ以上カロリーを減らすと基礎代謝を下回るおそれがあるため、今の摂取量を維持しましょう。`;
+    return;
+  }
+
   noteEl.textContent = `実測の体重変化は${signedKg(weeklyChange)}kg/週、目標のペースは${signedKg(
     expectedWeeklyKg
-  )}kg/週です。1日の摂取カロリーを目安${Math.abs(neededDeltaKcal)}kcal${action}と、目標のペースに近づきます。`;
+  )}kg/週です。1日の摂取カロリーを目安${Math.abs(adjustKcal)}kcal${action}と、無理なく目標のペースに近づきます。${capNote}`;
 }
 
 function exportData() {

@@ -20,8 +20,14 @@ const Calorie = {
   tdee(bmr, activityLevel) {
     return bmr * ACTIVITY_FACTORS[activityLevel].factor;
   },
-  targetCalories(tdee, goal) {
-    return tdee * GOAL_ADJUST[goal].factor;
+  targetCalories(tdee, goal, bmr, gender) {
+    const raw = tdee * GOAL_ADJUST[goal].factor;
+    if (goal === 'cut') {
+      const genderFloor = gender === 'female' ? 1200 : 1500;
+      const safeFloor = Math.max(bmr, genderFloor);
+      return Math.max(raw, safeFloor);
+    }
+    return raw;
   },
   macros(calories, weightKg, goal) {
     const proteinPerKg = goal === 'cut' ? 2.2 : goal === 'bulk' ? 1.8 : 2.0;
@@ -44,7 +50,7 @@ const Calorie = {
   summarize(profile) {
     const bmr = this.bmr(profile);
     const tdee = this.tdee(bmr, profile.activityLevel);
-    const target = this.targetCalories(tdee, profile.goal);
+    const target = this.targetCalories(tdee, profile.goal, bmr, profile.gender);
     const macros = this.macros(target, profile.weightKg, profile.goal);
     const bmi = this.bmi(profile.weightKg, profile.heightCm);
     return {
