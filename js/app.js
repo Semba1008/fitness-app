@@ -74,6 +74,28 @@ function showToast(message) {
   }, 1400);
 }
 
+let prCelebrationTimer = null;
+
+function showPRCelebration(exerciseName, oneRM) {
+  if (navigator.vibrate) navigator.vibrate([30, 60, 30]);
+  const overlay = document.getElementById('pr-celebration');
+  document.getElementById('pr-celebration-detail').textContent = `${exerciseName} 推定1RM ${oneRM}kg`;
+  overlay.hidden = false;
+  overlay.classList.remove('show');
+  // force reflow so the animation restarts if triggered again in quick succession
+  void overlay.offsetWidth;
+  overlay.classList.add('show');
+  clearTimeout(prCelebrationTimer);
+  const dismiss = () => {
+    overlay.classList.remove('show');
+    setTimeout(() => {
+      overlay.hidden = true;
+    }, 250);
+  };
+  overlay.onclick = dismiss;
+  prCelebrationTimer = setTimeout(dismiss, 2600);
+}
+
 const VIEW_TITLES = {
   'view-home': 'ホーム',
   'view-workout': '筋トレ',
@@ -231,10 +253,10 @@ function renderRecentPRs() {
     const history = historyForCurrentType(ex);
     if (history.length < 2) return;
     const last = history[history.length - 1];
-    const priorBest = Math.max(...history.slice(0, -1).map(sessionMaxWeight));
-    const lastMax = sessionMaxWeight(last);
-    if (lastMax > priorBest) {
-      prs.push({ exercise: ex, session: last, weight: lastMax });
+    const priorBest = Math.max(...history.slice(0, -1).map(sessionOneRepMax));
+    const lastOneRM = sessionOneRepMax(last);
+    if (lastOneRM > priorBest) {
+      prs.push({ exercise: ex, session: last, weight: lastOneRM });
     }
   });
   prs.sort((a, b) => (a.session.date < b.session.date ? 1 : -1));
@@ -249,7 +271,7 @@ function renderRecentPRs() {
       <div class="pr-badge">
         <svg class="icon"><use href="#icon-award"></use></svg>
         <div class="pr-body">
-          <div class="pr-title">${p.exercise.name} ${p.weight}kg</div>
+          <div class="pr-title">${p.exercise.name} 推定1RM ${p.weight}kg</div>
           <div class="pr-sub">${formatDateLabel(p.session.date)} に自己ベスト更新</div>
         </div>
       </div>`
@@ -307,13 +329,32 @@ function initCalendarState() {
   calendarSelectedDate = todayDateStr();
 }
 
+function dayActivityScores() {
+  const scores = {};
+  Storage.getWorkoutLog().forEach((s) => {
+    scores[s.date] = (scores[s.date] || 0) + 1;
+  });
+  Storage.getWeightLog().forEach((e) => {
+    scores[e.date] = (scores[e.date] || 0) + 1;
+  });
+  return scores;
+}
+
+function heatLevel(score) {
+  if (!score) return 0;
+  if (score === 1) return 1;
+  if (score <= 3) return 2;
+  if (score <= 5) return 3;
+  return 4;
+}
+
 function renderCalendar() {
   const grid = document.getElementById('calendar-grid');
   document.getElementById('calendar-month-label').textContent = `${calendarYear}年${calendarMonth + 1}月`;
 
   const firstWeekday = new Date(calendarYear, calendarMonth, 1).getDay();
   const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-  const sessionDates = new Set(Storage.getWorkoutLog().map((s) => s.date));
+  const scores = dayActivityScores();
   const today = todayDateStr();
 
   let html = '';
@@ -322,11 +363,10 @@ function renderCalendar() {
   }
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = toDateStr(new Date(calendarYear, calendarMonth, day));
-    const classes = ['calendar-day'];
+    const classes = ['calendar-day', `heat-${heatLevel(scores[dateStr])}`];
     if (dateStr === today) classes.push('today');
     if (dateStr === calendarSelectedDate) classes.push('selected');
-    const dot = sessionDates.has(dateStr) ? '<span class="dot"></span>' : '';
-    html += `<button type="button" class="${classes.join(' ')}" data-date="${dateStr}">${day}${dot}</button>`;
+    html += `<button type="button" class="${classes.join(' ')}" data-date="${dateStr}">${day}</button>`;
   }
   grid.innerHTML = html;
 
@@ -709,12 +749,12 @@ function renderSetRows() {
 
 function evaluateStrengthSession(exercise, session, priorSessions) {
   if (!priorSessions.length) return '初回の記録です。';
-  const maxWeight = sessionMaxWeight(session);
+  const oneRM = sessionOneRepMax(session);
   const allHitMin = session.sets.every((s) => s.reps >= exercise.repMin);
-  const bestPrevWeight = Math.max(...priorSessions.map(sessionMaxWeight));
-  if (maxWeight > bestPrevWeight) return '自己ベストを更新しました。';
+  const bestPrevOneRM = Math.max(...priorSessions.map(sessionOneRepMax));
+  if (oneRM > bestPrevOneRM) return `自己ベストを更新しました。(推定1RM: ${oneRM}kg)`;
   if (!allHitMin) return '目標回数に届かないセットがありました。';
-  if (maxWeight === bestPrevWeight) return '自己ベストの重量を維持できています。';
+  if (oneRM === bestPrevOneRM) return '自己ベストの推定1RMを維持できています。';
   return '安定した内容です。';
 }
 
@@ -990,6 +1030,10 @@ function saveSession() {
   }
   const cleanSets = sets.map((s) => ({ weight: s.weight, reps: s.reps, rpe: s.rpe === '' ? null : s.rpe }));
 
+  const priorHistory = historyForCurrentType(currentExercise).filter((s) => s.id !== editingSessionId);
+  const newOneRM = Math.max(...cleanSets.map((s) => estimateOneRepMax(s.weight, s.reps)));
+  const isPR = priorHistory.length > 0 && newOneRM > Math.max(...priorHistory.map(sessionOneRepMax));
+
   if (editingSessionId) {
     Storage.updateWorkoutSession(editingSessionId, { sets: cleanSets });
     showToast('更新しました');
@@ -1002,6 +1046,7 @@ function saveSession() {
     });
     showToast('記録しました');
   }
+  if (isPR) showPRCelebration(currentExercise.name, newOneRM);
   onExerciseChange(currentExercise.id);
   renderWorkoutDayLog();
 }
@@ -1282,17 +1327,85 @@ function renderWeightForecast() {
   )}kg/週です。1日の摂取カロリーを目安${Math.abs(adjustKcal)}kcal${action}と、無理なく目標のペースに近づきます。${capNote}`;
 }
 
-function exportData() {
-  const data = Storage.exportAll();
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+function downloadFile(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `training-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+function exportData() {
+  const data = Storage.exportAll();
+  downloadFile(`training-backup-${todayDateStr()}.json`, JSON.stringify(data, null, 2), 'application/json');
+}
+
+function csvEscape(value) {
+  const str = String(value === null || value === undefined ? '' : value);
+  return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+}
+
+function downloadCSV(filename, rows) {
+  const csv = rows.map((row) => row.map(csvEscape).join(',')).join('\r\n');
+  // 先頭にBOMを付けてExcelでも文字化けしないようにする
+  downloadFile(filename, '﻿' + csv, 'text/csv;charset=utf-8;');
+}
+
+function exportWorkoutCSV() {
+  const exercises = Storage.getExercises();
+  const rows = [
+    ['日付', '種目', '部位', '種類', '重量(kg)', '回数', 'RPE', '推定1RM(kg)', '時間(分)', '速度(km/h)', '傾斜(%)', '消費カロリー(kcal)'],
+  ];
+  Storage.getWorkoutLog().forEach((session) => {
+    const exercise = exercises.find((ex) => ex.id === session.exerciseId);
+    const name = exercise ? exercise.name : session.exerciseId;
+    const category = exercise ? exercise.category : '';
+    const type = exercise ? exercise.type : '';
+    if (session.cardio) {
+      rows.push([
+        session.date,
+        name,
+        category,
+        type,
+        '',
+        '',
+        '',
+        '',
+        session.cardio.durationMin,
+        session.cardio.speedKmh,
+        session.cardio.inclinePercent,
+        Math.round(session.cardio.calories),
+      ]);
+    } else {
+      session.sets.forEach((s) => {
+        rows.push([
+          session.date,
+          name,
+          category,
+          type,
+          s.weight,
+          s.reps,
+          s.rpe === null || s.rpe === undefined ? '' : s.rpe,
+          estimateOneRepMax(s.weight, s.reps),
+          '',
+          '',
+          '',
+          '',
+        ]);
+      });
+    }
+  });
+  downloadCSV(`training-log-${todayDateStr()}.csv`, rows);
+}
+
+function exportWeightCSV() {
+  const rows = [['日付', '体重(kg)']];
+  Storage.getWeightLog().forEach((e) => rows.push([e.date, e.weightKg]));
+  downloadCSV(`weight-log-${todayDateStr()}.csv`, rows);
 }
 
 function importData(file) {
@@ -1428,6 +1541,8 @@ function setupEventListeners() {
   document.getElementById('btn-save-profile').addEventListener('click', saveProfile);
 
   document.getElementById('btn-export').addEventListener('click', exportData);
+  document.getElementById('btn-export-workout-csv').addEventListener('click', exportWorkoutCSV);
+  document.getElementById('btn-export-weight-csv').addEventListener('click', exportWeightCSV);
   document.getElementById('import-file').addEventListener('change', (e) => {
     if (e.target.files[0]) importData(e.target.files[0]);
   });

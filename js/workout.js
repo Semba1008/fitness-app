@@ -2,6 +2,16 @@ function roundToHalf(value) {
   return Math.round(value * 2) / 2;
 }
 
+// Epleyの公式による推定1RM(最大挙上重量)
+function estimateOneRepMax(weight, reps) {
+  if (!weight || !reps || reps <= 1) return weight || 0;
+  return roundToHalf(weight * (1 + reps / 30));
+}
+
+function sessionOneRepMax(session) {
+  return Math.max(...session.sets.map((s) => estimateOneRepMax(s.weight, s.reps)));
+}
+
 const Workout = {
   suggestNext(exercise) {
     const history = Storage.historyFor(exercise.id).filter((s) => Array.isArray(s.sets));

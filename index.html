@@ -260,6 +260,15 @@
         <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
       </div>
       <div id="calendar-grid" class="calendar-grid"></div>
+      <div class="calendar-legend">
+        <span>少ない</span>
+        <span class="calendar-day heat-0"></span>
+        <span class="calendar-day heat-1"></span>
+        <span class="calendar-day heat-2"></span>
+        <span class="calendar-day heat-3"></span>
+        <span class="calendar-day heat-4"></span>
+        <span>多い</span>
+      </div>
       <h3 id="calendar-day-title">今日の記録</h3>
       <div id="calendar-day-detail"></div>
     </div>
@@ -342,6 +351,10 @@
         JSONからインポート
         <input type="file" id="import-file" accept="application/json" hidden />
       </label>
+      <div class="button-row">
+        <button class="btn-secondary" id="btn-export-workout-csv">筋トレをCSV出力</button>
+        <button class="btn-secondary" id="btn-export-weight-csv">体重をCSV出力</button>
+      </div>
     </div>
     <div class="card">
       <h2><svg class="icon"><use href="#icon-alert"></use></svg>危険な操作</h2>
@@ -356,6 +369,15 @@
 </main>
 
 <div id="toast" class="toast" hidden></div>
+
+<div id="pr-celebration" class="pr-celebration" hidden>
+  <div class="pr-celebration-card">
+    <span class="pr-burst" aria-hidden="true"></span>
+    <svg class="icon pr-celebration-icon"><use href="#icon-award"></use></svg>
+    <div class="pr-celebration-title">自己ベスト更新!</div>
+    <div class="pr-celebration-detail" id="pr-celebration-detail"></div>
+  </div>
+</div>
 
 <nav class="bottom-nav">
   <button class="nav-btn active" data-view="view-home" data-title="ホーム"><svg class="icon"><use href="#icon-home"></use></svg>ホーム</button>

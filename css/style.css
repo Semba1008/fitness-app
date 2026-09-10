@@ -481,29 +481,40 @@ button:active {
   cursor: default;
 }
 
+.calendar-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  margin: -6px 0 16px;
+}
+
+.calendar-legend .calendar-day {
+  width: 14px;
+  height: 14px;
+  aspect-ratio: unset;
+  border-radius: 4px;
+  cursor: default;
+}
+
 .calendar-day.today { border-color: var(--primary); }
+
+/* ヒートマップ: その日の記録数(トレーニング+体重)に応じて色の濃淡をつける */
+.calendar-day.heat-1 { background: rgba(57, 255, 157, 0.16); }
+.calendar-day.heat-2 { background: rgba(57, 255, 157, 0.34); }
+.calendar-day.heat-3 { background: rgba(57, 255, 157, 0.56); color: var(--primary-text); }
+.calendar-day.heat-4 { background: rgba(57, 255, 157, 0.85); color: var(--primary-text); }
 
 .calendar-day.selected {
   background: linear-gradient(135deg, var(--primary), var(--primary-strong));
   color: var(--primary-text);
+  box-shadow: 0 0 0 2px var(--primary) inset;
 }
 
 .calendar-day.today.selected {
   box-shadow: inset 0 0 0 2px var(--primary-text);
 }
-
-.calendar-day .dot {
-  position: absolute;
-  bottom: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--primary);
-}
-
-.calendar-day.selected .dot { background: var(--primary-text); }
 
 .log-section {
   padding-top: 18px;
@@ -640,6 +651,113 @@ button:active {
 .toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+.pr-celebration {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 4, 8, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  padding: 24px;
+}
+
+.pr-celebration.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.pr-celebration-card {
+  position: relative;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  padding: 40px 32px;
+  text-align: center;
+  max-width: 320px;
+  transform: scale(0.7);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 70px rgba(57, 255, 157, 0.28);
+}
+
+.pr-celebration.show .pr-celebration-card {
+  transform: scale(1);
+}
+
+.pr-celebration-icon {
+  font-size: 48px;
+  color: var(--secondary);
+  margin-bottom: 14px;
+  animation: pr-icon-bounce 0.6s ease 0.1s both;
+}
+
+@keyframes pr-icon-bounce {
+  0% { transform: scale(0) rotate(-20deg); }
+  60% { transform: scale(1.25) rotate(8deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.pr-celebration-title {
+  font-size: 21px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.pr-celebration-detail {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.pr-burst {
+  position: absolute;
+  inset: -20px;
+  pointer-events: none;
+}
+
+.pr-burst::before,
+.pr-burst::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow:
+    0 -60px 0 -1px var(--primary),
+    42px -42px 0 -1px var(--secondary),
+    60px 0 0 -1px var(--primary),
+    42px 42px 0 -1px var(--secondary),
+    0 60px 0 -1px var(--primary),
+    -42px 42px 0 -1px var(--secondary),
+    -60px 0 0 -1px var(--primary),
+    -42px -42px 0 -1px var(--secondary);
+  opacity: 0;
+  animation: pr-burst-anim 0.7s ease-out 0.05s both;
+}
+
+.pr-burst::after {
+  animation-delay: 0.15s;
+  transform: scale(0.6) rotate(20deg);
+}
+
+@keyframes pr-burst-anim {
+  0% { opacity: 0; transform: scale(0.2); }
+  40% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.6); }
 }
 
 .bottom-nav {
